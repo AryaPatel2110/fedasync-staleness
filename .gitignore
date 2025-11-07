@@ -1,0 +1,12 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Ignore all hidden folders
+.* /
+
+# Ignore PyTorch model files
+*.pt
+
+# Ignore dataset folder
+data/
