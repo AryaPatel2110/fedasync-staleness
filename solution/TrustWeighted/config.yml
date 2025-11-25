@@ -1,2 +1,6 @@
 data:
-  dirichlet_alpha: 0.5    # controls non-IID strength
+  data_dir: "./data"        # or whatever you used in FedAsync
+  dirichlet_alpha: 0.5      # <-- set this equal to FedAsync/FedBuff alpha
+  batch_size: 64            # match FedAsync/Buff
+  num_workers: 2            # match FedAsync/Buff
+  val_fraction: 0.1         # roughly what you used there

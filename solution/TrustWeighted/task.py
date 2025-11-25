@@ -32,8 +32,7 @@ if _CFG_PATH.exists():
 else:
     _RAW_CFG = {}
 
-_DIR_CFG = _RAW_CFG.get("data", {}) if isinstance(_RAW_CFG, dict) else {}
-DIRICHLET_ALPHA: float = float(_DIR_CFG.get("dirichlet_alpha", 0.5))
+_DATA_CFG = _RAW_CFG.get("data", {}) if isinstance(_RAW_CFG, dict) else {}
 
 
 @dataclass
@@ -44,7 +43,14 @@ class DataConfig:
     val_fraction: float = 0.1
 
 
-DATA_CFG = DataConfig()
+DATA_CFG = DataConfig(
+    data_dir=_DATA_CFG.get("data_dir", "./data"),
+    batch_size=int(_DATA_CFG.get("batch_size", 64)),
+    num_workers=int(_DATA_CFG.get("num_workers", 2)),
+    val_fraction=float(_DATA_CFG.get("val_fraction", 0.1)),
+)
+
+DIRICHLET_ALPHA: float = float(_DATA_CFG.get("dirichlet_alpha", 0.5))
 
 
 # ---------------------------------------------------------------------------
