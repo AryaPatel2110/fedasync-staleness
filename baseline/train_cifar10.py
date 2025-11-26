@@ -1,6 +1,7 @@
 import argparse
 import csv
 import subprocess
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +13,7 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, models, transforms
 from torchvision.models import SqueezeNet1_1_Weights
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.helper import get_device, set_seed
 
 
