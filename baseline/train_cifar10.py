@@ -6,7 +6,14 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import torch
+try:
+    import torch
+except Exception as e:
+    sys.stderr.write('ERROR: PyTorch not installed or incompatible with this interpreter.\n')
+    sys.stderr.write(f'{e.__class__.__name__}: {e}\n')
+    sys.stderr.write('Hint: activate .venv_311 and pip install torch torchvision numpy pyyaml.\n')
+    sys.exit(1)
+
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
@@ -15,6 +22,10 @@ from torchvision.models import SqueezeNet1_1_Weights
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.helper import get_device, set_seed
+
+print(f"[env] python={sys.version.split()[0]} torch={getattr(torch,'__version__','?')} "
+      f"mps={getattr(getattr(torch,'backends',None),'mps',None) and torch.backends.mps.is_available()} "
+      f"cuda={torch.cuda.is_available()}", flush=True)
 
 
 def build_squeezenet_cifar10():
@@ -146,7 +157,7 @@ def main():
                 f"{test_acc:.6f}", f"{args.lr:.6f}", f"{args.wd:.6f}", args.batch, args.seed
             ])
 
-        print(f"Epoch {epoch}/{args.epochs}: train_loss={train_loss:.4f} val_acc={val_acc:.4f} test_acc={test_acc:.4f}")
+        print(f"[epoch {epoch}/{args.epochs}] train_loss={train_loss:.6f} val_acc={val_acc:.6f} test_acc={test_acc:.6f}", flush=True)
 
 
 if __name__ == "__main__":
