@@ -24,6 +24,8 @@ async:
   c: 0.5
   fedasync_mixing_alpha: 0.5
   use_sample_weighing: true
+  clip_norm: null  # float or null
+  tau_max: null  # int or null
 
 # ---- Evaluation / stopping ----
 eval:
