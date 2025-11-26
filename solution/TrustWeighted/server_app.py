@@ -1,7 +1,8 @@
 """TrustWeighted: A Flower / PyTorch Lightning app (ServerApp)."""
 
 from __future__ import annotations
-
+from pathlib import Path
+import csv
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context
 from flwr.serverapp import Grid, ServerApp
@@ -46,6 +47,25 @@ def main(grid: Grid, context: Context) -> None:
         num_rounds=num_rounds,
         train_config=train_cfg,
     )
+
+        # ------------------------------------------------------------------
+    # Save per-round training metrics to CSV (TrustWeighted.csv)
+    # ------------------------------------------------------------------
+    logs_dir = Path("logs")
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = logs_dir / "TrustWeighted.csv"
+
+    # Decide which fields to write (must match keys in train_history)
+    fieldnames = ["round", "train_loss", "total_examples", "buffer_size", "num_accepted", "avg_staleness"]
+
+    with csv_path.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in strategy.train_history:
+            # Make sure only known fields are written
+            writer.writerow({k: row.get(k, "") for k in fieldnames})
+
+    print(f"Saved per-round TrustWeighted metrics to {csv_path}")
 
     # Save final model to disk
     print("\nSaving final model to disk...")

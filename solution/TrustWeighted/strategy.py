@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Sequence, Tuple
-
+from typing import Iterable, List, Optional, Sequence, Tuple, OrderedDict, Dict, Any
 import numpy as np
 import torch
-
+import csv
 from flwr.app import ArrayRecord, ConfigRecord, Message, MetricRecord, RecordDict
 from flwr.serverapp import Grid
 from flwr.serverapp.strategy import FedAvg
@@ -202,6 +202,8 @@ class AsyncTrustFedAvg(FedAvg):
         self.rule = TrustWeightedAsyncRule()
         self._current_arrays: Optional[ArrayRecord] = None
         self._direction_state: Optional[OrderedDict[str, torch.Tensor]] = None
+        self.train_history: list[dict[str, float]] = []
+        self.eval_history: list[dict[str, float]] = []
 
     # ---- configure_train: remember global model arrays ----
 
@@ -322,5 +324,18 @@ class AsyncTrustFedAvg(FedAvg):
         # Aggregate metrics (weighted average of train_loss)
         avg_loss = weighted_loss_sum / max(total_examples, 1)
         agg_metrics = MetricRecord({"train_loss": avg_loss, self.weighted_by_key: total_examples})
+        avg_staleness = 0.0
+        if buffer:
+            avg_staleness = sum(cu.staleness for cu in buffer) / len(buffer)
 
+        self.train_history.append(
+            {
+                "round": float(server_round),
+                "train_loss": float(avg_loss),
+                "total_examples": float(total_examples),
+                "buffer_size": float(len(buffer)),
+                "num_accepted": float(len(buffer)),  # or len(accepted_updates) if you have that
+                "avg_staleness": float(avg_staleness),
+            }
+        )
         return new_arrays, agg_metrics
