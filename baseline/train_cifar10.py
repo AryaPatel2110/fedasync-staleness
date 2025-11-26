@@ -97,5 +97,4 @@ def main():
             csv.writer(f).writerow([f"{time.time()-start_time:.3f}", epoch, f"{train_loss:.6f}", f"{val_acc:.6f}", f"{test_acc:.6f}", f"{args.lr:.6f}", f"{args.wd:.6f}", args.batch, args.seed])
         print(f"[epoch {epoch}/{args.epochs}] train_loss={train_loss:.6f} val_acc={val_acc:.6f} test_acc={test_acc:.6f}", flush=True)
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
