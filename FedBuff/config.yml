@@ -18,6 +18,8 @@ clients:
   delay_fast_range: [0.0, 0.2]  # seconds, Uniform[a, b] for fast/normal clients
   jitter_per_round: 0.1         # extra +/- seconds each local fit; 0 disables
   fix_delays_per_client: true   # true: sample once per client; false: resample every fit
+  straggler_fraction: 0.0       # probability of straggler delay per dispatch (SB1)
+  straggler_scale: 3.0         # scale factor for straggler delays (SB1)
 
 # ---- Buffered FedBuff ----
 buff:

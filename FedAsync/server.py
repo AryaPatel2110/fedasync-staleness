@@ -96,7 +96,7 @@ class AsyncFedServer:
                     "time_sec", "round", "test_acc", "updates_per_sec",
                     "tau_bin_0", "tau_bin_1", "tau_bin_2", "tau_bin_3", "tau_bin_4", "tau_bin_5",
                     "tau_bin_6_10", "tau_bin_11_20", "tau_bin_21p",
-                    "align_mean", "fairness_gini", "method", "alpha", "K", "timeout", "m", "seed"
+                    "align_mean", "fairness_gini", "method", "alpha", "K", "timeout", "m", "seed", "strag_frac"
                 ])
 
         if not self.participation_csv.exists():
@@ -265,7 +265,7 @@ class AsyncFedServer:
         gini = (2.0 * gini) / (n * sum(weights)) - (n + 1) / n
         return max(0.0, min(1.0, gini))
 
-    def _periodic_eval_and_log(self, method: str = "FedAsync", alpha: float = 0.5, K: int = 8, timeout: float = 0.5, m: int = 20, seed: int = 42):
+    def _periodic_eval_and_log(self, method: str = "FedAsync", alpha: float = 0.5, K: int = 8, timeout: float = 0.5, m: int = 20, seed: int = 42, strag_frac: float = 0.0):
         test_loss, test_acc = _evaluate(self.model, self.testloader, self.device)
         avg_train_loss, avg_train_acc = self._compute_avg_train()
         now = time.time() - self._start_ts
@@ -283,7 +283,7 @@ class AsyncFedServer:
                 f"{now:.3f}", self.t_round, f"{test_acc:.6f}", f"{updates_per_sec:.6f}",
                 tau_bins[0], tau_bins[1], tau_bins[2], tau_bins[3], tau_bins[4], tau_bins[5],
                 tau_bins[6], tau_bins[7], tau_bins[8],
-                "NaN", f"{fairness_gini:.6f}", method, f"{alpha:.6f}", K, f"{timeout:.6f}", m, seed
+                "NaN", f"{fairness_gini:.6f}", method, f"{alpha:.6f}", K, f"{timeout:.6f}", m, seed, f"{strag_frac:.6f}"
             ])
         print(f"[LOG] total_agg={self.t_round} "
               f"avg_train_loss={avg_train_loss:.4f} avg_train_acc={avg_train_acc:.4f} "

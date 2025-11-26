@@ -140,13 +140,23 @@ class LocalBuffClient:
     def _sleep_delay(self):
         global_d = float(self.cfg.get("server_runtime", {}).get("client_delay", 0.0))
         base = self.base_delay
+        straggler_fraction = float(self.cfg.get("clients", {}).get("straggler_fraction", 0.0))
+        straggler_scale = float(self.cfg.get("clients", {}).get("straggler_scale", 3.0))
 
         if not self.fix_delay and self.delay_ranges is not None:
             (a_s, b_s), (a_f, b_f) = self.delay_ranges
-            if self.slow:
-                base = random.uniform(float(a_s), float(b_s))
+            is_straggler = random.random() < straggler_fraction
+            if is_straggler:
+                scale = straggler_scale
+                if self.slow:
+                    base = random.uniform(float(a_s) * scale, float(b_s) * scale)
+                else:
+                    base = random.uniform(float(a_f) * scale, float(b_f) * scale)
             else:
-                base = random.uniform(float(a_f), float(b_f))
+                if self.slow:
+                    base = random.uniform(float(a_s), float(b_s))
+                else:
+                    base = random.uniform(float(a_f), float(b_f))
 
         jit = random.uniform(-self.jitter, self.jitter) if self.jitter > 0.0 else 0.0
         delay = max(0.0, global_d + base + jit)

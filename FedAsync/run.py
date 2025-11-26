@@ -60,7 +60,7 @@ def main():
     
     import subprocess
     commit_hash = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True).strip()
-    csv_header = "time_sec,round,test_acc,updates_per_sec,tau_bin_0,tau_bin_1,tau_bin_2,tau_bin_3,tau_bin_4,tau_bin_5,tau_bin_6_10,tau_bin_11_20,tau_bin_21p,align_mean,fairness_gini,method,alpha,K,timeout,m,seed"
+    csv_header = "time_sec,round,test_acc,updates_per_sec,tau_bin_0,tau_bin_1,tau_bin_2,tau_bin_3,tau_bin_4,tau_bin_5,tau_bin_6_10,tau_bin_11_20,tau_bin_21p,align_mean,fairness_gini,method,alpha,K,timeout,m,seed,strag_frac"
     with open(logs_base / "COMMIT.txt", "w") as f:
         f.write(f"{commit_hash},{csv_header}\n")
     
@@ -90,6 +90,7 @@ def main():
         tau_max=cfg["async"].get("tau_max"),
     )
     
+    strag_frac = float(cfg.get("clients", {}).get("straggler_fraction", 0.0))
     server._method_params = {
         "method": "FedAsync",
         "alpha": float(cfg.get("partition_alpha", 0.5)),
@@ -97,6 +98,7 @@ def main():
         "timeout": float(cfg["eval"]["interval_seconds"]),
         "m": int(cfg["clients"]["total"]),
         "seed": seed,
+        "strag_frac": strag_frac,
     }
 
     # ---- derive per-client delays to simulate heterogeneity ----
