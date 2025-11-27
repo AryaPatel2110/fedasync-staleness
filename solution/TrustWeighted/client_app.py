@@ -69,9 +69,10 @@ def train(msg: Message, context: Context) -> Message:
 
     trainer.fit(model, train_dataloaders=trainloader, val_dataloaders=valloader)
 
-    # Retrieve averaged training loss from Lightning's logged metrics
-    train_loss_tensor = trainer.callback_metrics.get("train_loss")
-    train_loss = float(train_loss_tensor.item()) if train_loss_tensor is not None else 0.0
+    # Extract metrics from Lightning
+    cb_metrics = trainer.callback_metrics
+    train_loss = float(cb_metrics.get("train_loss", 0.0))
+    train_acc = float(cb_metrics.get("train_acc", 0.0))
 
     # -------------------------------------------------------------------------
     # 4) Package updated model and metrics into a Message
@@ -80,6 +81,7 @@ def train(msg: Message, context: Context) -> Message:
     metrics = MetricRecord(
             {
                 "train_loss": train_loss,
+                "train_acc": train_acc,
                 # This key is used by FedAvg/AsyncTrustFedAvg as the aggregation weight
                 "num-examples": len(trainloader.dataset),
                 # Round in which this client received the global model

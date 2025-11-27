@@ -1,1 +1,1 @@
-round,train_loss,total_examples,buffer_size,num_accepted,avg_staleness
+round,train_loss,train_acc,total_examples,buffer_size,num_accepted,avg_staleness

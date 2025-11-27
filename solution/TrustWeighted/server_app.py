@@ -56,7 +56,7 @@ def main(grid: Grid, context: Context) -> None:
     csv_path = logs_dir / "TrustWeighted.csv"
 
     # Decide which fields to write (must match keys in train_history)
-    fieldnames = ["round", "train_loss", "total_examples", "buffer_size", "num_accepted", "avg_staleness"]
+    fieldnames = ["round", "train_loss","train_acc", "total_examples", "buffer_size", "num_accepted", "avg_staleness"]
 
     with csv_path.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
