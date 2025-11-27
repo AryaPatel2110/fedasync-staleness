@@ -90,6 +90,7 @@ def main():
     )
     
     strag_frac = float(cfg.get("clients", {}).get("straggler_fraction", 0.0))
+    server._debug_flush = bool(cfg.get("buff", {}).get("debug_flush", False))
     server._method_params = {
         "method": "FedBuff",
         "alpha": float(cfg.get("partition_alpha", 0.5)),

@@ -1,3 +1,4 @@
+import math
 import time
 from pathlib import Path
 from typing import List, Tuple, Optional
@@ -132,6 +133,7 @@ class LocalBuffClient:
 
         self.accelerator = _device_to_accelerator(self.device)
         self.testloader = _testloader(cfg["data"]["data_dir"])
+        self._debug_printed = False
 
     def _to_list(self) -> List[torch.Tensor]:
         return state_to_list(self.lit.model.state_dict())
@@ -198,6 +200,29 @@ class LocalBuffClient:
 
         new_params = self._to_list()
         num_examples = len(self.loader.dataset)
+        
+        if self.cfg.get("debug_client_once", False) and not self._debug_printed and self.cid == 0:
+            params_before, _ = server.get_global()
+            first_batch = next(iter(self.loader))
+            x0, y0 = first_batch[0].to(self.device), first_batch[1].to(self.device)
+            self.lit.model.eval()
+            with torch.no_grad():
+                loss0 = self.lit.criterion(self.lit.model(x0), y0).item()
+            self.lit.model.train()
+            self.lit.zero_grad()
+            logits = self.lit.model(x0)
+            loss = self.lit.criterion(logits, y0)
+            loss.backward()
+            self.lit.optimizers().step()
+            with torch.no_grad():
+                lossK = self.lit.criterion(self.lit.model(x0), y0).item()
+            self._from_list(params_before)
+            new_params_debug = self._to_list()
+            delta_norms = [torch.norm((n - b).view(-1)) for n, b in zip(new_params_debug, params_before)]
+            u_norm = math.sqrt(sum(n.item() ** 2 for n in delta_norms))
+            steps = epochs * len(self.loader)
+            print(f"[client] steps={steps} n={num_examples} loss0={loss0:.6f} lossK={lossK:.6f} ||u||={u_norm:.6f}", flush=True)
+            self._debug_printed = True
 
         server.submit_update(
             client_id=self.cid,

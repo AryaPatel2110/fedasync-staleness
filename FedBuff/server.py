@@ -157,8 +157,13 @@ class BufferedFedServer:
 
         g = state_to_list(self.model.state_dict())
         total_samples = sum(u["num_samples"] for u in self._buffer)
+        debug_flush = getattr(self, "_debug_flush", False)
 
         merged = [torch.zeros_like(gi, device=gi.device) for gi in g]
+        sumW = 0.0
+        u_norms = []
+        u_hat_norms = []
+        staleness_weights = []
         for u in self._buffer:
             staleness = max(0, self.t_round - u["base_version"])
             self._staleness_history.append(staleness)
@@ -166,22 +171,38 @@ class BufferedFedServer:
             staleness_weight = self._compute_staleness_weight(staleness)
             weight = float(u["num_samples"]) / float(total_samples) if self.use_sample_weighing else 1.0 / len(self._buffer)
             weight *= staleness_weight
+            sumW += weight
+            staleness_weights.append(staleness_weight)
             
             self._client_weights[u["client_id"]] = self._client_weights.get(u["client_id"], 0.0) + weight
             
             update_params = u["new_params"]
+            g_tensors = [gi.to(update_params[0].device).type_as(update_params[0]) for gi in g]
+            deltas = [ci.to(g_tensors[i].device).type_as(g_tensors[i]) - g_tensors[i] for i, ci in enumerate(update_params)]
+            delta_norms_sq = [torch.norm(d.view(-1)).item() ** 2 for d in deltas]
+            u_norm = math.sqrt(sum(delta_norms_sq))
+            u_norms.append(u_norm)
+            
             if self.clip_norm is not None:
-                g_tensors = [gi.to(update_params[0].device).type_as(update_params[0]) for gi in g]
-                deltas = [ci.to(g_tensors[i].device).type_as(g_tensors[i]) - g_tensors[i] for i, ci in enumerate(update_params)]
-                delta_norms_sq = [torch.norm(d.view(-1)).item() ** 2 for d in deltas]
-                total_norm = math.sqrt(sum(delta_norms_sq))
-                if total_norm > self.clip_norm:
-                    clip_coef = self.clip_norm / (total_norm + 1e-8)
+                if u_norm > self.clip_norm:
+                    clip_coef = self.clip_norm / (u_norm + 1e-8)
                     update_params = [g_tensors[i] + deltas[i] * clip_coef for i in range(len(deltas))]
+                    u_hat_norms.append(self.clip_norm)
+                else:
+                    u_hat_norms.append(u_norm)
+            else:
+                u_hat_norms.append(u_norm)
             
             for i, ci in enumerate(update_params):
                 ci_tensor = ci.to(merged[i].device).type_as(merged[i])
                 merged[i] += weight * ci_tensor
+
+        step_deltas = [m - gi for m, gi in zip(merged, g)]
+        step_norms_sq = [torch.norm(d.view(-1)).item() ** 2 for d in step_deltas]
+        step_norm = math.sqrt(sum(step_norms_sq))
+        mean_u_norm = sum(u_norms) / len(u_norms) if u_norms else 0.0
+        mean_u_hat_norm = sum(u_hat_norms) / len(u_hat_norms) if u_hat_norms else 0.0
+        mean_s_tau = sum(staleness_weights) / len(staleness_weights) if staleness_weights else 0.0
 
         new_state = list_to_state(self.template, merged)
         self.model.load_state_dict(new_state, strict=True)
@@ -191,7 +212,10 @@ class BufferedFedServer:
 
         self._buffer.clear()
         self._buffer_last_flush = time.time()
+        step_before = self.t_round
         self.t_round += 1
+        if debug_flush:
+            print(f"[flush] step={step_before} sumW={sumW:.6f} mean||u||={mean_u_norm:.6f} mean||û||={mean_u_hat_norm:.6f} step_norm={step_norm:.6f} mean_s(tau)={mean_s_tau:.6f}", flush=True)
         self._save_ckpt()
 
     def submit_update(

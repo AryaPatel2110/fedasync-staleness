@@ -2,6 +2,7 @@ buff:
   buffer_size: 8
   buffer_timeout_s: 0.5
   clip_norm: 10.0  # sanity run: increased from null
+  debug_flush: true  # debug run
   eta: 0.00125
   staleness_alpha: 0.5
   staleness_type: poly
@@ -18,6 +19,7 @@ clients:
   - 2.0
   fix_delays_per_client: true
   jitter_per_round: 0.1
+  debug_client_once: true  # debug run
   local_epochs: 1
   lr: 0.0125
   momentum: 0.9
@@ -51,4 +53,4 @@ seed: 1
 server_runtime:
   client_delay: 0.0
 train:
-  max_rounds: 40  # sanity run: 40 flushes
+  max_rounds: 20  # debug run: 20 flushes
