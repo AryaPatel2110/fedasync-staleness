@@ -38,7 +38,7 @@ def main():
     device = get_device()
     mean, std = (0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)
 
-    train_tf = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor(), transforms.Normalize(mean, std), transforms.RandomErasing(p=0.25)])
+    train_tf = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor(), transforms.Normalize(mean, std), transforms.RandomErasing(p=0.25), transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10)])
     val_test_tf = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
 
     train_full = datasets.CIFAR10(args.data_dir, train=True, download=True, transform=None)
