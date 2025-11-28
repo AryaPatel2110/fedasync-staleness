@@ -10,7 +10,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from utils.model import build_squeezenet
+from utils.model import build_resnet18
 from utils.helper import get_device
 
 from .config import GlobalConfig, load_config
@@ -32,7 +32,48 @@ def _testloader(root: str, batch_size: int = 256) -> DataLoader:
 
 
 def _flatten_state(state: "ODType[str, torch.Tensor]") -> torch.Tensor:
+    """Flatten a state_dict into a 1D tensor.
+
+    The default implementation simply concatenates parameters in whatever
+    iteration order the dictionary exposes.  While this works for
+    ``OrderedDict`` instances created from the same model template, it can
+    become brittle when ``state`` is a plain Python ``dict`` because the
+    insertion order may differ from the server's canonical template.  An
+    inconsistent ordering corrupts the mapping between parameter slices and
+    model layers, which in turn leads to meaningless update vectors and
+    prevents the global model from learning.
+
+    To avoid such subtle bugs, prefer ``_flatten_state_by_template`` when
+    flattening a state that may not share the exact ordering with the
+    server's template (see ``_flatten_state_by_template`` below).
+    """
     return torch.cat([p.reshape(-1) for p in state.values()])
+
+
+def _flatten_state_by_template(
+    state: Dict[str, torch.Tensor], template: "ODType[str, torch.Tensor]"
+) -> torch.Tensor:
+    """Flatten ``state`` according to the key ordering of ``template``.
+
+    Many downstream computations (e.g. computing parameter deltas) assume
+    that all 1D parameter vectors follow the same ordering.  When
+    ``state`` is a plain ``dict`` created from a model state_dict,
+    Python preserves insertion order, but nothing guarantees that this
+    ordering matches that of the server's ``template``.  This helper
+    constructs a flattened tensor by explicitly iterating over the keys of
+    ``template``, thereby aligning the parameter ordering regardless of
+    how ``state`` was constructed.
+
+    Args:
+        state: Mapping from parameter names to tensors.  Can be a
+            standard ``dict`` or ``OrderedDict``.
+        template: The canonical parameter ordering to follow.
+
+    Returns:
+        A 1D tensor containing all parameters from ``state`` in the order
+        specified by ``template``.
+    """
+    return torch.cat([state[k].reshape(-1) for k in template.keys()])
 
 
 def _vector_to_state(
@@ -42,7 +83,7 @@ def _vector_to_state(
     offset = 0
     for k, t in template.items():
         numel = t.numel()
-        new_state[k] = vec[offset: offset + numel].view_as(t).clone()
+        new_state[k] = vec[offset : offset + numel].view_as(t).clone()
         offset += numel
     assert offset == vec.numel()
     return new_state
@@ -77,7 +118,7 @@ class AsyncServer:
         self.testloader = _testloader(cfg.data.data_dir, batch_size=256)
 
         # global model and version history
-        model = build_squeezenet(num_classes=cfg.data.num_classes)
+        model = build_resnet18(num_classes=cfg.data.num_classes)
         self._template_state: ODType[str, torch.Tensor] = ODType(
             (k, v.detach().cpu().clone()) for k, v in model.state_dict().items()
         )
@@ -122,6 +163,13 @@ class AsyncServer:
         self._stop: bool = False
         self._stop_reason: str = ""
         self._lock = threading.Lock()
+
+        # Ensures only one aggregation is in-flight at a time.  Without
+        # this lock, multiple threads could concurrently call
+        # ``_aggregate`` on separate buffers, causing race conditions in
+        # versioning and inconsistent staleness calculations.  All calls
+        # to ``_aggregate`` must acquire this lock.
+        self._agg_lock = threading.Lock()
 
     # ----------------------------------------------------------------- logging
 
@@ -237,13 +285,18 @@ class AsyncServer:
         """Return (version, state_dict) of the current global model."""
         with self._lock:
             version = self._version
-            state = {k: v.clone() for k, v in self._global_state.items()}
+            # Preserve the parameter ordering when sending to clients by
+            # constructing an OrderedDict.  A plain dict may reorder keys
+            # unexpectedly on some Python versions or implementations,
+            # breaking downstream flatten/unflatten assumptions.  Clones
+            # ensure the server's tensors remain unmodified.
+            state = ODType((k, v.clone()) for k, v in self._global_state.items())
         return version, state
 
     # --------------------------------------------------------------- evaluation
 
     def _make_model_from_state(self, state: Dict[str, torch.Tensor]) -> torch.nn.Module:
-        model = build_squeezenet(num_classes=self.cfg.data.num_classes)
+        model = build_resnet18(num_classes=self.cfg.data.num_classes)
         model.load_state_dict(state)
         return model.to(self.device)
 
@@ -287,7 +340,9 @@ class AsyncServer:
             self.buffer.clear()
             self._last_flush_ts = now
 
-        self._aggregate(buffer_copy)
+        # Serialize aggregations to avoid version races
+        with self._agg_lock:
+            self._aggregate(buffer_copy)
 
     def _aggregate(self, updates: List[ClientUpdateState]) -> None:
         """Aggregate a batch of client updates and log to CSVs."""
@@ -296,7 +351,8 @@ class AsyncServer:
 
         # Snapshot of current global parameters and version history
         with self._lock:
-            global_vec = _flatten_state(self._global_state)
+            # Always flatten the global state according to the template order
+            global_vec = _flatten_state_by_template(self._global_state, self._template_state)
             version_now = self._version
             model_versions = list(self._model_versions)
 
@@ -307,8 +363,9 @@ class AsyncServer:
 
         for u in updates:
             base_state = model_versions[u.base_version]
-            base_vec = _flatten_state(base_state)
-            new_vec = _flatten_state(u.new_params)
+            # Flatten base_state and new_params using the canonical template order
+            base_vec = _flatten_state_by_template(base_state, self._template_state)
+            new_vec = _flatten_state_by_template(u.new_params, self._template_state)
             ui = new_vec - base_vec
 
             # τ_i = current-server-version - base_version (same τ_i used in strategy)

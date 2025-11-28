@@ -87,16 +87,24 @@ class AsyncFedServer:
         if not self.csv_path.exists():
             self.csv_path.parent.mkdir(parents=True, exist_ok=True)
             with self.csv_path.open("w", newline="") as f:
-                csv.writer(f).writerow(["total_agg", "avg_train_loss", "avg_train_acc",
-                                        "test_loss", "test_acc", "time"])
+                csv.writer(f).writerow(
+                    ["total_agg", "avg_train_loss", "avg_train_acc", "test_loss", "test_acc", "time"]
+                )
 
         if not self.participation_csv.exists():
             self.participation_csv.parent.mkdir(parents=True, exist_ok=True)
             with self.participation_csv.open("w", newline="") as f:
-                csv.writer(f).writerow([
-                    "client_id", "local_train_loss", "local_train_acc",
-                    "local_test_loss", "local_test_acc", "total_agg"
-                ])
+                csv.writer(f).writerow(
+                    [
+                        "client_id",
+                        "local_train_loss",
+                        "local_train_acc",
+                        "local_test_loss",
+                        "local_test_acc",
+                        "total_agg",
+                        "staleness",
+                    ]
+                )
 
         self._lock = threading.Lock()
         self._stop = False
@@ -153,13 +161,6 @@ class AsyncFedServer:
                 self._stop = True
                 return
 
-            # Log client participation before increment
-            with self.participation_csv.open("a", newline="") as f:
-                csv.writer(f).writerow([
-                    client_id, f"{train_loss:.6f}", f"{train_acc:.6f}",
-                    f"{test_loss:.6f}", f"{test_acc:.6f}", self.t_round
-                ])
-
             # FedAsync merge
             staleness = max(0, self.t_round - base_version)
             alpha = self.c / float(staleness + 1)
@@ -171,11 +172,41 @@ class AsyncFedServer:
             new_state = list_to_state(self.template, merged)
             self.model.load_state_dict(new_state, strict=True)
 
-            # accumulate metrics since last eval tick
-            self._train_loss_acc_accum.append((float(train_loss), float(train_acc), int(num_samples)))
-
             self.t_round += 1
             self._save_ckpt()
+
+            # Evaluate immediately after this aggregation and log like TrustWeight
+            test_loss, test_acc = _evaluate(self.model, self.testloader, self.device)
+
+            # Global CSV: one row per aggregation
+            with self.csv_path.open("a", newline="") as f:
+                csv.writer(f).writerow(
+                    [
+                        self.t_round,
+                        f"{train_loss:.6f}",
+                        f"{train_acc:.6f}",
+                        f"{test_loss:.6f}",
+                        f"{test_acc:.6f}",
+                        f"{time.time():.3f}",
+                    ]
+                )
+
+            # Client participation CSV (append staleness like TrustWeight)
+            with self.participation_csv.open("a", newline="") as f:
+                csv.writer(f).writerow(
+                    [
+                        client_id,
+                        f"{train_loss:.6f}",
+                        f"{train_acc:.6f}",
+                        f"{test_loss:.6f}",
+                        f"{test_acc:.6f}",
+                        self.t_round,
+                        float(staleness),
+                    ]
+                )
+
+            # accumulate metrics since last eval tick (used by optional timer)
+            self._train_loss_acc_accum.append((float(train_loss), float(train_acc), int(num_samples)))
 
     def should_stop(self) -> bool:
         with self._lock:

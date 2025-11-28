@@ -4,9 +4,9 @@ data:
   num_classes: 10
 
 clients:
-  total: 3
-  concurrent: 3
-  local_epochs: 10
+  total: 20
+  concurrent: 20
+  local_epochs: 1
   batch_size: 128
   lr: 0.1
 
@@ -22,7 +22,7 @@ eval:
   target_accuracy: 0.80         # stop training when achieved
 
 train:
-  max_rounds: 2000               # stop after this many aggregations
+  max_rounds: 3               # stop after this many aggregations
 
 partition_alpha: 0.8            # Dirichlet α for non-IID partitioning
 seed: 42

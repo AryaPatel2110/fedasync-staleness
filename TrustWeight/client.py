@@ -11,7 +11,7 @@ from torchvision import datasets, transforms
 import pytorch_lightning as pl  # imported but not required; kept for compatibility
 from pytorch_lightning.callbacks import ModelCheckpoint  # unused, kept for compatibility
 
-from utils.model import build_squeezenet
+from utils.model import build_resnet18
 from utils.helper import get_device
 
 from .config import GlobalConfig
@@ -95,7 +95,7 @@ class AsyncClient:
         return max(0.0, base + jitter + self.client_delay)
 
     def _build_model(self) -> nn.Module:
-        model = build_squeezenet(num_classes=self.num_classes)
+        model = build_resnet18(num_classes=self.num_classes)
         return model.to(self.device)
 
     # ---------------------------------------------------------------- training
@@ -169,7 +169,16 @@ class AsyncClient:
         test_loss, test_acc = self._evaluate_on_loader(model)
 
         # Move params to CPU tensors so they are cheap to share with server
-        new_params = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+        # Build an OrderedDict for ``new_params`` using the model's own
+        # parameter ordering.  Although Python's plain dicts preserve
+        # insertion order, explicitly constructing an ``OrderedDict`` makes
+        # the intent clear and avoids any surprises if the language
+        # specification changes.  The server relies on matching key
+        # ordering to correctly flatten parameter tensors.
+        from collections import OrderedDict
+        new_params = OrderedDict()
+        for k, v in model.state_dict().items():
+            new_params[k] = v.detach().cpu().clone()
         num_examples = len(self.loader.dataset)
 
         delta_loss = loss_before - loss_after  # ΔL̃_i
