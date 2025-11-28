@@ -1,4 +1,3 @@
-import math
 import time
 from pathlib import Path
 from typing import List, Tuple, Optional
@@ -50,7 +49,7 @@ def _evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> Tup
 
 
 class LitCifar(pl.LightningModule):
-    def __init__(self, base_model: nn.Module, lr: float = 1e-3, momentum: float = 0.9, weight_decay: float = 5e-4):
+    def __init__(self, base_model: nn.Module, lr: float = 1e-3):
         super().__init__()
         self.save_hyperparameters(ignore=["base_model"])
         self.model = base_model
@@ -83,9 +82,7 @@ class LitCifar(pl.LightningModule):
         return self._train_loss_sum / self._train_total, self._train_correct / self._train_total
 
     def configure_optimizers(self):
-        momentum = getattr(self.hparams, 'momentum', 0.9)
-        weight_decay = getattr(self.hparams, 'weight_decay', 5e-4)
-        return torch.optim.SGD(self.parameters(), lr=self.hparams.lr, momentum=momentum, weight_decay=weight_decay)
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
 
 
 class LocalBuffClient:
@@ -106,10 +103,7 @@ class LocalBuffClient:
         self.device = get_device()
 
         base = build_squeezenet(num_classes=cfg["data"]["num_classes"], pretrained=False)
-        lr = float(cfg["clients"]["lr"])
-        momentum = float(cfg["clients"].get("momentum", 0.9))
-        weight_decay = float(cfg["clients"].get("weight_decay", 5e-4))
-        self.lit = LitCifar(base, lr=lr, momentum=momentum, weight_decay=weight_decay)
+        self.lit = LitCifar(base, lr=float(cfg["clients"]["lr"]))
 
         self.loader = DataLoader(subset, batch_size=int(cfg["clients"]["batch_size"]),
                                  shuffle=True, num_workers=0)
@@ -133,7 +127,6 @@ class LocalBuffClient:
 
         self.accelerator = _device_to_accelerator(self.device)
         self.testloader = _testloader(cfg["data"]["data_dir"])
-        self._debug_printed = False
 
     def _to_list(self) -> List[torch.Tensor]:
         return state_to_list(self.lit.model.state_dict())
@@ -147,23 +140,13 @@ class LocalBuffClient:
     def _sleep_delay(self):
         global_d = float(self.cfg.get("server_runtime", {}).get("client_delay", 0.0))
         base = self.base_delay
-        straggler_fraction = float(self.cfg.get("clients", {}).get("straggler_fraction", 0.0))
-        straggler_scale = float(self.cfg.get("clients", {}).get("straggler_scale", 3.0))
 
         if not self.fix_delay and self.delay_ranges is not None:
             (a_s, b_s), (a_f, b_f) = self.delay_ranges
-            is_straggler = random.random() < straggler_fraction
-            if is_straggler:
-                scale = straggler_scale
-                if self.slow:
-                    base = random.uniform(float(a_s) * scale, float(b_s) * scale)
-                else:
-                    base = random.uniform(float(a_f) * scale, float(b_f) * scale)
+            if self.slow:
+                base = random.uniform(float(a_s), float(b_s))
             else:
-                if self.slow:
-                    base = random.uniform(float(a_s), float(b_s))
-                else:
-                    base = random.uniform(float(a_f), float(b_f))
+                base = random.uniform(float(a_f), float(b_f))
 
         jit = random.uniform(-self.jitter, self.jitter) if self.jitter > 0.0 else 0.0
         delay = max(0.0, global_d + base + jit)
@@ -200,29 +183,6 @@ class LocalBuffClient:
 
         new_params = self._to_list()
         num_examples = len(self.loader.dataset)
-        
-        if self.cfg.get("debug_client_once", False) and not self._debug_printed and self.cid == 0:
-            params_before, _ = server.get_global()
-            first_batch = next(iter(self.loader))
-            x0, y0 = first_batch[0].to(self.device), first_batch[1].to(self.device)
-            self.lit.model.eval()
-            with torch.no_grad():
-                loss0 = self.lit.criterion(self.lit.model(x0), y0).item()
-            self.lit.model.train()
-            self.lit.zero_grad()
-            logits = self.lit.model(x0)
-            loss = self.lit.criterion(logits, y0)
-            loss.backward()
-            self.lit.optimizers().step()
-            with torch.no_grad():
-                lossK = self.lit.criterion(self.lit.model(x0), y0).item()
-            self._from_list(params_before)
-            new_params_debug = self._to_list()
-            delta_norms = [torch.norm((n - b).view(-1)) for n, b in zip(new_params_debug, params_before)]
-            u_norm = math.sqrt(sum(n.item() ** 2 for n in delta_norms))
-            steps = epochs * len(self.loader)
-            print(f"[client] steps={steps} n={num_examples} loss0={loss0:.6f} lossK={lossK:.6f} ||u||={u_norm:.6f}", flush=True)
-            self._debug_printed = True
 
         server.submit_update(
             client_id=self.cid,

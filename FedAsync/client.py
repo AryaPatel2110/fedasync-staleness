@@ -50,7 +50,7 @@ def _evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> Tup
 
 
 class LitCifar(pl.LightningModule):
-    def __init__(self, base_model: nn.Module, lr: float = 1e-3, momentum: float = 0.9, weight_decay: float = 5e-4):
+    def __init__(self, base_model: nn.Module, lr: float = 1e-3):
         super().__init__()
         self.save_hyperparameters(ignore=["base_model"])
         self.model = base_model
@@ -83,9 +83,7 @@ class LitCifar(pl.LightningModule):
         return self._train_loss_sum / self._train_total, self._train_correct / self._train_total
 
     def configure_optimizers(self):
-        momentum = getattr(self.hparams, 'momentum', 0.9)
-        weight_decay = getattr(self.hparams, 'weight_decay', 5e-4)
-        return torch.optim.SGD(self.parameters(), lr=self.hparams.lr, momentum=momentum, weight_decay=weight_decay)
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
 
 
 class LocalAsyncClient:
@@ -108,10 +106,7 @@ class LocalAsyncClient:
         self.device = get_device()
 
         base = build_squeezenet(num_classes=cfg["data"]["num_classes"], pretrained=False)
-        lr = float(cfg["clients"]["lr"])
-        momentum = float(cfg["clients"].get("momentum", 0.9))
-        weight_decay = float(cfg["clients"].get("weight_decay", 5e-4))
-        self.lit = LitCifar(base, lr=lr, momentum=momentum, weight_decay=weight_decay)
+        self.lit = LitCifar(base, lr=float(cfg["clients"]["lr"]))
 
         self.loader = DataLoader(subset, batch_size=int(cfg["clients"]["batch_size"]),
                                  shuffle=True, num_workers=0)
@@ -150,27 +145,23 @@ class LocalAsyncClient:
         self.lit.to(self.device)
 
     def _sleep_delay(self):
+        # global delay from config (kept for backward compat)
         global_d = float(self.cfg.get("server_runtime", {}).get("client_delay", 0.0))
-        base = self.base_delay
-        straggler_fraction = float(self.cfg.get("clients", {}).get("straggler_fraction", 0.0))
-        straggler_scale = float(self.cfg.get("clients", {}).get("straggler_scale", 3.0))
 
+        # per-client base delay
+        base = self.base_delay
+
+        # if not fixed, resample each fit
         if not self.fix_delay and self.delay_ranges is not None:
             (a_s, b_s), (a_f, b_f) = self.delay_ranges
-            is_straggler = random.random() < straggler_fraction
-            if is_straggler:
-                scale = straggler_scale
-                if self.slow:
-                    base = random.uniform(float(a_s) * scale, float(b_s) * scale)
-                else:
-                    base = random.uniform(float(a_f) * scale, float(b_f) * scale)
+            if self.slow:
+                base = random.uniform(float(a_s), float(b_s))
             else:
-                if self.slow:
-                    base = random.uniform(float(a_s), float(b_s))
-                else:
-                    base = random.uniform(float(a_f), float(b_f))
+                base = random.uniform(float(a_f), float(b_f))
 
+        # add +/- jitter
         jit = random.uniform(-self.jitter, self.jitter) if self.jitter > 0.0 else 0.0
+
         delay = max(0.0, global_d + base + jit)
         if delay > 0.0:
             time.sleep(delay)
