@@ -16,6 +16,21 @@ def build_squeezenet(num_classes: int = 10, pretrained: bool = False) -> nn.Modu
     return m
 
 
+def build_resnet18(num_classes: int = 10, pretrained: bool = False) -> nn.Module:
+    """Create ResNet-18 adapted for CIFAR-10 and replace the classifier head."""
+    if pretrained:
+        m = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+    else:
+        m = models.resnet18(weights=None)
+    # CIFAR-10: 32x32 -> use 3x3 conv, stride 1, no maxpool
+    m.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+    m.maxpool = nn.Identity()
+    # Replace classifier
+    m.fc = nn.Linear(m.fc.in_features, num_classes)
+    m.num_classes = num_classes
+    return m
+
+
 def state_to_list(state: Dict[str, torch.Tensor]) -> List[torch.Tensor]:
     """Flatten a state_dict to a list of tensors on CPU."""
     return [t.detach().cpu().clone() for _, t in state.items()]
