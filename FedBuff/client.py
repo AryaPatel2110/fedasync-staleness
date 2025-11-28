@@ -8,9 +8,9 @@ from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+# ModelCheckpoint removed - checkpointing disabled to avoid overwriting global model
 
-from utils.model import build_squeezenet, state_to_list, list_to_state
+from utils.model import build_resnet18, state_to_list, list_to_state
 from utils.helper import get_device
 import random
 
@@ -49,11 +49,15 @@ def _evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> Tup
 
 
 class LitCifar(pl.LightningModule):
-    def __init__(self, base_model: nn.Module, lr: float = 1e-3):
+    def __init__(self, base_model: nn.Module, lr: float = 1e-3, momentum: float = 0.9, weight_decay: float = 5e-4):
         super().__init__()
         self.save_hyperparameters(ignore=["base_model"])
         self.model = base_model
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # Label smoothing for regularization
+        # Store optimizer params directly (not in hparams to avoid Lightning issues)
+        self._optimizer_lr = lr
+        self._optimizer_momentum = momentum
+        self._optimizer_weight_decay = weight_decay
         self._train_loss_sum = 0.0
         self._train_correct = 0
         self._train_total = 0
@@ -82,7 +86,13 @@ class LitCifar(pl.LightningModule):
         return self._train_loss_sum / self._train_total, self._train_correct / self._train_total
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
+        # Use stored optimizer params directly
+        return torch.optim.SGD(
+            self.parameters(), 
+            lr=self._optimizer_lr, 
+            momentum=self._optimizer_momentum, 
+            weight_decay=self._optimizer_weight_decay
+        )
 
 
 class LocalBuffClient:
@@ -102,15 +112,19 @@ class LocalBuffClient:
         self.cfg = cfg
         self.device = get_device()
 
-        base = build_squeezenet(num_classes=cfg["data"]["num_classes"], pretrained=False)
-        self.lit = LitCifar(base, lr=float(cfg["clients"]["lr"]))
+        base = build_resnet18(num_classes=cfg["data"]["num_classes"], pretrained=False)
+        lr = float(cfg["clients"]["lr"])
+        momentum = float(cfg["clients"].get("momentum", 0.9))
+        weight_decay = float(cfg["clients"].get("weight_decay", 5e-4))
+        self.lit = LitCifar(base, lr=lr, momentum=momentum, weight_decay=weight_decay)
 
         self.loader = DataLoader(subset, batch_size=int(cfg["clients"]["batch_size"]),
                                  shuffle=True, num_workers=0)
 
-        self.client_dir = Path(work_dir) / f"cid_{cid}"
-        self.client_dir.mkdir(parents=True, exist_ok=True)
-        self.ckpt_path = str(self.client_dir / "last.ckpt")
+        # Client checkpointing disabled - always start from fresh global model
+        # self.client_dir = Path(work_dir) / f"cid_{cid}"
+        # self.client_dir.mkdir(parents=True, exist_ok=True)
+        # self.ckpt_path = str(self.client_dir / "last.ckpt")
 
         self.base_delay = float(base_delay)
         self.slow = bool(slow)
@@ -160,24 +174,28 @@ class LocalBuffClient:
         self._sleep_delay()
 
         epochs = int(self.cfg["clients"]["local_epochs"])
-        callbacks = [ModelCheckpoint(dirpath=str(self.client_dir),
-                                     filename="last", save_last=True, save_top_k=0)]
         trainer = pl.Trainer(
             max_epochs=epochs,
             accelerator=self.accelerator,
             devices=1,
-            enable_checkpointing=True,
+            enable_checkpointing=False,  # Disable checkpointing to avoid overwriting global model
             logger=False,
             enable_model_summary=False,
             num_sanity_val_steps=0,
             enable_progress_bar=False,
-            callbacks=callbacks,
+            callbacks=[],  # No callbacks needed for standard FL runs
+            gradient_clip_val=1.0,  # Gradient clipping for stability
+            gradient_clip_algorithm="norm",
         )
         start = time.time()
-        ckpt = self.ckpt_path if Path(self.ckpt_path).exists() else None
-        trainer.fit(self.lit, train_dataloaders=self.loader, ckpt_path=ckpt)
+        # Don't restore from checkpoint - always start from fresh global model
+        trainer.fit(self.lit, train_dataloaders=self.loader)
         duration = time.time() - start
 
+        # Debug: Check if training actually ran
+        if self.lit._train_total == 0:
+            print(f"[WARN] Client {self.cid}: No training steps executed! Dataset size: {len(self.loader.dataset)}, Batches: {len(self.loader)}")
+        
         train_loss, train_acc = self.lit.get_epoch_metrics()
         test_loss, test_acc = _evaluate(self.lit.model, self.testloader, self.device)
 
