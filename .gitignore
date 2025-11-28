@@ -11,7 +11,7 @@ __pycache__/
 # Ignore dataset folder
 data/
 checkpoints/
-logs/
+# logs/ - Removed to track experiment logs
 
 # Ignore .venv folder
 .venv/
