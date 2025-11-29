@@ -3,23 +3,23 @@ data:
   data_dir: ./data
   num_classes: 10
 clients:
-  total: 10
-  concurrent: 5
-  local_epochs: 5
+  total: 20
+  concurrent: 10
+  local_epochs: 3
   batch_size: 128
   lr: 0.01
   momentum: 0.9
   weight_decay: 5e-4
-  straggler_fraction: 0.0
+  straggler_fraction: 0.3
   straggler_scale: 3.0
-  struggle_percent: 0
+  struggle_percent: 30
   delay_slow_range:
-  - 0.0
-  - 0.0
+  - 0.8
+  - 2.0
   delay_fast_range:
   - 0.0
-  - 0.0
-  jitter_per_round: 0.0
+  - 0.2
+  jitter_per_round: 0.1
   fix_delays_per_client: true
 buff:
   buffer_size: 5
@@ -30,7 +30,7 @@ eval:
   interval_seconds: 0.5
   target_accuracy: 0.8
 train:
-  max_rounds: 100
+  max_rounds: 20
 partition_alpha: 0.1
 seed: 1
 server_runtime:
