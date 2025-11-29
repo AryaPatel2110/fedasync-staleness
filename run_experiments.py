@@ -49,9 +49,9 @@ def update_config(config_path: str, exp: dict) -> None:
     is_regime_b = exp['id'].startswith('H')
     
     if is_regime_b:
-        # Regime B: Realistic async (50/70 clients, concurrent=20, heterogeneity enabled)
-        cfg['clients']['total'] = 50  # Can be changed to 70 if needed
-        cfg['clients']['concurrent'] = 20
+        # Regime B: Realistic async (20 clients, concurrent=10, heterogeneity enabled)
+        cfg['clients']['total'] = 20  # Reduced from 50 for testing
+        cfg['clients']['concurrent'] = 10  # Reduced from 20 for testing
         cfg['partition_alpha'] = 0.1  # Non-IID
         # Enable heterogeneity
         cfg['clients']['straggler_fraction'] = 0.3
