@@ -24,6 +24,8 @@ class ClientsConfig:
     local_epochs: int
     batch_size: int
     lr: float
+    weight_decay: float
+    grad_clip: float
     struggle_percent: int
     delay_slow_range: Tuple[float, float]
     delay_fast_range: Tuple[float, float]
@@ -40,6 +42,7 @@ class EvalConfig:
 @dataclass
 class TrainConfig:
     max_rounds: int
+    update_clip_norm: float
 
 
 @dataclass
@@ -96,6 +99,8 @@ def load_config(path: str | Path = "TrustWeight/config.yaml") -> GlobalConfig:
         local_epochs=int(clients_section["local_epochs"]),
         batch_size=int(clients_section["batch_size"]),
         lr=float(clients_section["lr"]),
+        weight_decay=float(clients_section.get("weight_decay", 5e-4)),
+        grad_clip=float(clients_section.get("grad_clip", 5.0)),
         struggle_percent=int(clients_section.get("struggle_percent", 0)),
         delay_slow_range=_as_tuple(clients_section.get("delay_slow_range", [0.8, 2.0])),
         delay_fast_range=_as_tuple(clients_section.get("delay_fast_range", [0.0, 0.2])),
@@ -108,7 +113,10 @@ def load_config(path: str | Path = "TrustWeight/config.yaml") -> GlobalConfig:
         target_accuracy=float(raw["eval"]["target_accuracy"]),
     )
 
-    train_cfg = TrainConfig(max_rounds=int(raw["train"]["max_rounds"]))
+    train_cfg = TrainConfig(
+        max_rounds=int(raw["train"]["max_rounds"]),
+        update_clip_norm=float(raw["train"].get("update_clip_norm", 10.0)),
+    )
 
     server_runtime_cfg = ServerRuntimeConfig(
         client_delay=float(raw["server_runtime"].get("client_delay", 0.0))

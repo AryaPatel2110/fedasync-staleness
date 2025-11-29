@@ -158,6 +158,7 @@ class AsyncServer:
         self.eval_interval_s: float = cfg.eval.interval_seconds
         self.target_accuracy: float = cfg.eval.target_accuracy
         self.max_rounds: int = cfg.train.max_rounds
+        self.update_clip_norm: float = float(cfg.train.update_clip_norm)
 
         self._num_aggregations: int = 0  # total_agg counter
         self._stop: bool = False
@@ -360,6 +361,7 @@ class AsyncServer:
         # and collect staleness τ_i for logging.
         update_vectors: List[Dict[str, torch.Tensor]] = []
         staleness_list: List[float] = []
+        valid_updates: List[ClientUpdateState] = []
 
         for u in updates:
             base_state = model_versions[u.base_version]
@@ -367,6 +369,15 @@ class AsyncServer:
             base_vec = _flatten_state_by_template(base_state, self._template_state)
             new_vec = _flatten_state_by_template(u.new_params, self._template_state)
             ui = new_vec - base_vec
+
+            # Skip obviously bad updates (NaN/Inf) to avoid corrupting the global model
+            if not torch.isfinite(ui).all():
+                print(f"[Server] Dropping client {u.client_id} update due to NaN/Inf values")
+                continue
+            if self.update_clip_norm > 0:
+                norm = torch.norm(ui)
+                if torch.isfinite(norm) and norm.item() > self.update_clip_norm:
+                    ui = ui * (self.update_clip_norm / (norm + 1e-12))
 
             # τ_i = current-server-version - base_version (same τ_i used in strategy)
             tau_i = float(max(0, version_now - u.base_version))
@@ -381,6 +392,11 @@ class AsyncServer:
                     "delta_loss": torch.tensor(delta_loss, dtype=torch.float32),
                 }
             )
+            valid_updates.append(u)
+
+        if not update_vectors:
+            print("[Server] Buffer flush skipped: no valid updates after filtering.")
+            return
 
         # Run the trust-weighted aggregation strategy (unchanged algorithm)
         new_global_vec, agg_metrics = self.strategy.aggregate(global_vec, update_vectors)
@@ -389,8 +405,8 @@ class AsyncServer:
         new_state = _vector_to_state(new_global_vec, self._template_state)
 
         # Compute average local train metrics for this aggregation
-        avg_train_loss = sum(u.loss_after for u in updates) / len(updates)
-        avg_train_acc = sum(u.train_acc for u in updates) / len(updates)
+        avg_train_loss = sum(u.loss_after for u in valid_updates) / len(valid_updates)
+        avg_train_acc = sum(u.train_acc for u in valid_updates) / len(valid_updates)
 
         # Commit the new global model and update aggregation counter
         with self._lock:
@@ -415,12 +431,12 @@ class AsyncServer:
         )
         self._append_client_participation_log(
             total_agg=total_agg,
-            updates=updates,
+            updates=valid_updates,
             staleness_list=staleness_list,
         )
 
         print(
-            f"[Server] Aggregated {len(updates)} updates -> agg={total_agg} "
+            f"[Server] Aggregated {len(valid_updates)} updates -> agg={total_agg} "
             f"(avg_tau={agg_metrics.get('avg_tau', 0.0):.3f}, "
             f"test_loss={test_loss:.4f}, test_acc={test_acc:.4f})"
         )

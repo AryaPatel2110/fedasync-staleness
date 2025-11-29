@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
+from torch.nn.utils import clip_grad_norm_
 
 import pytorch_lightning as pl  # imported but not required; kept for compatibility
 from pytorch_lightning.callbacks import ModelCheckpoint  # unused, kept for compatibility
@@ -18,9 +19,11 @@ from .config import GlobalConfig
 
 
 def _build_transform() -> transforms.Compose:
-    # Simple CIFAR-10 preprocessing (same as before)
+    # CIFAR-10 standard augmentation to reduce overfitting
     return transforms.Compose(
         [
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
         ]
@@ -72,6 +75,8 @@ class AsyncClient:
         self.num_classes = cfg.data.num_classes
         self.local_epochs = cfg.clients.local_epochs
         self.lr = cfg.clients.lr
+        self.weight_decay = cfg.clients.weight_decay
+        self.grad_clip = cfg.clients.grad_clip
 
         # --- straggler behaviour ---
         num_clients = cfg.clients.total
@@ -124,7 +129,12 @@ class AsyncClient:
         """Train for `local_epochs` and return (loss_after, acc_after)."""
         model.train()
         criterion = nn.CrossEntropyLoss()
-        optim = torch.optim.SGD(model.parameters(), lr=self.lr, momentum=0.9)
+        optim = torch.optim.SGD(
+            model.parameters(),
+            lr=self.lr,
+            momentum=0.9,
+            weight_decay=self.weight_decay,
+        )
 
         for _ in range(self.local_epochs):
             for xb, yb in self.loader:
@@ -133,6 +143,8 @@ class AsyncClient:
                 logits = model(xb)
                 loss = criterion(logits, yb)
                 loss.backward()
+                if self.grad_clip > 0:
+                    clip_grad_norm_(model.parameters(), self.grad_clip)
                 optim.step()
 
         # reuse evaluation code for final metrics
