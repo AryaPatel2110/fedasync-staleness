@@ -1,0 +1,61 @@
+# ============================================
+#  IID (alpha = 1000) EXPERIMENT CONFIG
+# ============================================
+
+data:
+  dataset: "cifar10"
+  data_dir: "./data"
+  num_classes: 10
+
+clients:
+  total: 20             # same as your plan
+  concurrent: 5         # stable and realistic
+  local_epochs: 1       # IMPORTANT: keeps fairness for async FL
+  batch_size: 128
+  lr: 0.005             # tuned for stability in FL with 1 epoch
+  momentum: 0.9
+  weight_decay: 0.001
+  grad_clip: 5.0
+
+  # No stragglers for IID experiment
+  struggle_percent: 0
+  delay_slow_range: [0.0, 0.0]
+  delay_fast_range: [0.0, 0.0]
+  jitter_per_round: 0.0
+  fix_delays_per_client: true
+
+# FedAsync parameters
+async:
+  c: 0.5
+  fedasync_mixing_alpha: 1.0  # Increased from 0.5 for proper learning
+  use_sample_weighing: true
+
+# FedBuff parameters (FedAsync ignores these if not used)
+buff:
+  buffer_size: 5
+  buffer_timeout_s: 0.0
+  use_sample_weighing: true
+  eta: 0.5             # you already tuned this and it's good
+
+eval:
+  interval_seconds: 0.5
+  target_accuracy: 0.80   # may be reached in IID
+
+train:
+  max_rounds: 50       # enough for IID, saves time
+
+partition_alpha: 1000  # <--- KEY SETTING (IID experiment)
+
+seed: 1
+
+server_runtime:
+  client_delay: 0.0
+
+io:
+  checkpoints_dir: "./checkpoints/FedAsync"
+  logs_dir: "./logs"
+  results_dir: "./results"
+
+  global_log_csv: "./logs/FedAsync.csv"
+  client_participation_csv: "./logs/FedAsyncClientParticipation.csv"
+  final_model_path: "./results/FedAsyncModel.pt"
