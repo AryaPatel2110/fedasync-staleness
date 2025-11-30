@@ -116,11 +116,17 @@ class AsyncFedServer:
     def _maybe_resume(self) -> None:
         ck = self._ckpt_file()
         if ck.exists():
-            blob = torch.load(ck, map_location="cpu")
-            state = list_to_state(self.template, blob["global_params"])
-            self.model.load_state_dict(state, strict=True)
-            self.t_round = int(blob["t_round"])
-            print(f"[resume] Loaded server checkpoint at total_agg={self.t_round}")
+            try:
+                blob = torch.load(ck, map_location="cpu")
+                state = list_to_state(self.template, blob["global_params"])
+                self.model.load_state_dict(state, strict=True)
+                self.t_round = int(blob["t_round"])
+                print(f"[resume] Loaded server checkpoint at total_agg={self.t_round}")
+            except (RuntimeError, KeyError) as e:
+                # Checkpoint incompatible (e.g., architecture change) - start fresh
+                print(f"[resume] Checkpoint incompatible, starting fresh: {type(e).__name__}")
+                ck.unlink()  # Delete incompatible checkpoint
+                self.t_round = 0
 
     def _save_ckpt(self) -> None:
         sd = state_to_list(self.model.state_dict())
