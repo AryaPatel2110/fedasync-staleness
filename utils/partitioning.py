@@ -152,7 +152,8 @@ class DataDistributor:
 # -------------------------------
 if __name__ == "__main__":
     distributor = DataDistributor(dataset_name="CIFAR10")
-    distributor.distribute_data(num_clients=5, alpha=0.3, seed=42)
+
+    distributor.distribute_data(num_clients=21, alpha=1000, seed=42)
     distributor.visualize_distribution("./results/cifar10_distribution_ieee.png")
 
     # Retrieve client dataset subset
