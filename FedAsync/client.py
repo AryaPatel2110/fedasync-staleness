@@ -7,6 +7,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
+from contextlib import redirect_stdout, redirect_stderr
+import io
 
 import pytorch_lightning as pl
 
@@ -28,7 +30,10 @@ def _testloader(root: str, batch_size: int = 256):
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
     ])
-    ds = datasets.CIFAR10(root=root, train=False, download=True, transform=tfm)
+    buf = io.StringIO()
+    # Silence torchvision download/cache prints
+    with redirect_stdout(buf), redirect_stderr(buf):
+        ds = datasets.CIFAR10(root=root, train=False, download=True, transform=tfm)
     return DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=2)
 
 

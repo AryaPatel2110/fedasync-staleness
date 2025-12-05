@@ -6,12 +6,12 @@ from pathlib import Path
 import math
 import csv
 from typing import Iterable, List
-import threading
+from concurrent.futures import ThreadPoolExecutor
 
-from .config import GlobalConfig, load_config
-from .run import _set_seed
-from .client import AsyncClient
-from .server import AsyncServer
+from ..config import GlobalConfig, load_config
+from ..run import _set_seed
+from ..client import AsyncClient
+from ..server import AsyncServer
 from utils.partitioning import DataDistributor
 
 
@@ -65,26 +65,23 @@ def run_with_cfg(cfg: GlobalConfig) -> None:
         clients.append(AsyncClient(cid=cid, indices=indices, cfg=cfg))
 
     # ------------------- concurrency control ---------------------
-    sem = threading.Semaphore(cfg.clients.concurrent)
-
     def client_loop(cl: AsyncClient) -> None:
         while not server.should_stop():
-            with sem:
-                cont = cl.run_once(server)
+            cont = cl.run_once(server)
             if not cont or server.should_stop():
                 break
 
-    # --------------------- start client threads ------------------
-    threads: List[threading.Thread] = []
-    for cl in clients:
-        t = threading.Thread(target=client_loop, args=(cl,), daemon=True)
-        t.start()
-        threads.append(t)
+    # --------------------- start client threads via executor ------------------
+    with ThreadPoolExecutor(max_workers=cfg.clients.concurrent) as executor:
+        futures = [executor.submit(client_loop, cl) for cl in clients]
 
-    # --------------------- wait for completion -------------------
-    server.wait()
-    for t in threads:
-        t.join(timeout=1.0)
+        # --------------------- wait for completion -------------------
+        server.wait()
+        for f in futures:
+            try:
+                f.result(timeout=1.0)
+            except Exception:
+                pass
 
 
 def alpha_sweep(

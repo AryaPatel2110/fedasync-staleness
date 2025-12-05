@@ -88,6 +88,7 @@ class AsyncClient:
         self.delay_fast_range = tuple(cfg.clients.delay_fast_range)
         self.jitter_per_round = float(cfg.clients.jitter_per_round)
         self.client_delay = float(cfg.server_runtime.client_delay)
+        print(cid)
 
     # ------------------------------------------------------------------ utils
 

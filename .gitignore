@@ -14,3 +14,4 @@ checkpoints/
 
 # Ignore .venv folder
 .venv/
+.venv310/

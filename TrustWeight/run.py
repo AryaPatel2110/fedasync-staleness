@@ -1,8 +1,9 @@
 # Orchestrator: partitions data, starts server, runs async clients
 import logging
 import random
-import threading
 from typing import List
+
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import torch
@@ -12,6 +13,7 @@ from .config import load_config
 from .client import AsyncClient
 from .server import AsyncServer
 from utils.partitioning import DataDistributor  # <-- NEW: use external partitioner
+from utils.helper import get_device 
 
 
 def _set_seed(seed: int) -> None:
@@ -40,6 +42,7 @@ def _build_train_dataset(data_dir: str) -> datasets.CIFAR10:
 
 
 def main() -> None:
+    print(f"Using device: {get_device()}")
     logging.basicConfig(level=logging.INFO)
 
     # --------------------- load config & seed ---------------------
@@ -79,30 +82,28 @@ def main() -> None:
         )
         clients.append(client)
 
-    # ------------------- concurrency control ---------------------
-    # At most `cfg.clients.concurrent` clients train at the same time.
-    sem = threading.Semaphore(cfg.clients.concurrent)
-
     def client_loop(cl: AsyncClient) -> None:
         """Loop for a single client: fetch global, train, send update, repeat."""
         while not server.should_stop():
-            with sem:
-                cont = cl.run_once(server)
+            cont = cl.run_once(server)
             if not cont or server.should_stop():
                 break
 
-    # --------------------- start client threads ------------------
-    threads: List[threading.Thread] = []
-    for cl in clients:
-        t = threading.Thread(target=client_loop, args=(cl,), daemon=True)
-        t.start()
-        threads.append(t)
+    # --------------------- start client threads via executor ------------------
+    # Pool size enforces the concurrent-client limit.
+    with ThreadPoolExecutor(max_workers=cfg.clients.concurrent) as executor:
+        futures = [executor.submit(client_loop, cl) for cl in clients]
 
-    # --------------------- wait for completion -------------------
-    # Server decides when to stop (based on target accuracy / max rounds).
-    server.wait()
-    for t in threads:
-        t.join(timeout=1.0)
+        # --------------------- wait for completion -------------------
+        # Server decides when to stop (based on target accuracy / max rounds).
+        server.wait()
+
+        # Ensure all client loops exit before shutting down.
+        for f in futures:
+            try:
+                f.result(timeout=1.0)
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
