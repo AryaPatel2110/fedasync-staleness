@@ -2,6 +2,7 @@
 import csv
 import time
 import threading
+from concurrent.futures import ThreadPoolExecutor, Future
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, OrderedDict as ODType
@@ -89,6 +90,67 @@ def _vector_to_state(
     return new_state
 
 
+def _async_eval_worker(
+    state_dict: Dict[str, torch.Tensor],
+    data_dir: str,
+    num_classes: int,
+    log_path: str,
+    agg_id: int,
+    avg_train_loss: float,
+    avg_train_acc: float,
+    device_str: str,
+) -> None:
+    """Evaluate a model copy in a background thread to avoid blocking the server."""
+    device = torch.device(device_str)
+    model = build_resnet18(num_classes=num_classes)
+    model.load_state_dict(state_dict)
+    model = model.to(device)
+    loader = _testloader(root=data_dir, batch_size=256)
+    model.eval()
+    criterion = torch.nn.CrossEntropyLoss()
+    total_loss = 0.0
+    total_correct = 0
+    total_examples = 0
+    with torch.no_grad():
+        for xb, yb in loader:
+            xb, yb = xb.to(device), yb.to(device)
+            logits = model(xb)
+            loss = criterion(logits, yb)
+            total_loss += loss.item() * xb.size(0)
+            preds = logits.argmax(dim=1)
+            total_correct += (preds == yb).sum().item()
+            total_examples += xb.size(0)
+    if total_examples == 0:
+        return
+    test_loss = total_loss / total_examples
+    test_acc = total_correct / total_examples
+
+    # Lightweight log so the main server can keep moving.
+    log_path = Path(log_path)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not log_path.exists()
+    with log_path.open("a", newline="") as f:
+        writer = csv.writer(f)
+        if write_header:
+            writer.writerow(
+                ["total_agg", "avg_train_loss", "avg_train_acc", "test_loss", "test_acc", "time"]
+            )
+        writer.writerow(
+            [
+                int(agg_id),
+                float(avg_train_loss),
+                float(avg_train_acc),
+                float(test_loss),
+                float(test_acc),
+                time.time(),
+            ]
+        )
+    print(
+        f"[AsyncEval] agg={agg_id} test_loss={test_loss:.4f} test_acc={test_acc:.4f} "
+        f"(avg_train_loss={avg_train_loss:.4f}, avg_train_acc={avg_train_acc:.4f})"
+    )
+
+
 @dataclass
 class ClientUpdateState:
     client_id: int
@@ -145,12 +207,7 @@ class AsyncServer:
         self.io_root = Path(cfg.io.logs_dir)
         self.io_root.mkdir(parents=True, exist_ok=True)
 
-        # Global training log CSV
-        self.global_log_path = Path(cfg.io.global_log_csv)
-        self.global_log_path.parent.mkdir(parents=True, exist_ok=True)
-        self._init_global_log()
-
-        # Client participation log CSV
+        # Aggregation log CSV (per-client participation)
         self.client_log_path = Path(cfg.io.client_participation_csv)
         self.client_log_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_client_log()
@@ -159,6 +216,8 @@ class AsyncServer:
         self.target_accuracy: float = cfg.eval.target_accuracy
         self.max_rounds: int = cfg.train.max_rounds
         self.update_clip_norm: float = float(cfg.train.update_clip_norm)
+        # Evaluate the global model only every N aggregations (not every time).
+        self.eval_every_aggs: int = 5
 
         self._num_aggregations: int = 0  # total_agg counter
         self._stop: bool = False
@@ -172,59 +231,17 @@ class AsyncServer:
         # to ``_aggregate`` must acquire this lock.
         self._agg_lock = threading.Lock()
 
+        # Async evaluation state (dedicated worker thread)
+        self._eval_executor = ThreadPoolExecutor(max_workers=1)
+        self._async_eval_future: Optional[Future] = None
+        self.async_eval_log_path = self.io_root / "TrustWeightAsyncEval.csv"
+        self._last_eval: Tuple[float, float] = (0.0, 0.0)
+        self._init_async_eval_log()
+
     # ----------------------------------------------------------------- logging
 
-    def _init_global_log(self) -> None:
-        """Initialize the global training CSV if it does not exist.
-
-        Columns (per aggregation):
-            total_agg, avg_train_loss, avg_train_acc, test_loss, test_acc, time
-        """
-        if self.global_log_path.exists():
-            return
-        with self.global_log_path.open("w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(
-                [
-                    "total_agg",
-                    "avg_train_loss",
-                    "avg_train_acc",
-                    "test_loss",
-                    "test_acc",
-                    "time",
-                ]
-            )
-
-    def _append_global_log(
-        self,
-        total_agg: int,
-        avg_train_loss: float,
-        avg_train_acc: float,
-        test_loss: float,
-        test_acc: float,
-    ) -> None:
-        """Append a single aggregation row to the global CSV."""
-        ts = time.time()
-        with self.global_log_path.open("a", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(
-                [
-                    int(total_agg),
-                    float(avg_train_loss),
-                    float(avg_train_acc),
-                    float(test_loss),
-                    float(test_acc),
-                    ts,
-                ]
-            )
-
     def _init_client_log(self) -> None:
-        """Initialize the client participation CSV.
-
-        Columns:
-            client_id, local_train_loss, local_train_acc,
-            local_test_loss, local_test_acc, total_agg, staleness
-        """
+        """Initialize client participation CSV (one row per participating client)."""
         if self.client_log_path.exists():
             return
         with self.client_log_path.open("w", newline="") as f:
@@ -241,16 +258,23 @@ class AsyncServer:
                 ]
             )
 
+    def _init_async_eval_log(self) -> None:
+        """Initialize async global evaluation CSV (every N aggregations)."""
+        if self.async_eval_log_path.exists():
+            return
+        with self.async_eval_log_path.open("w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                ["total_agg", "avg_train_loss", "avg_train_acc", "test_loss", "test_acc", "time"]
+            )
+
     def _append_client_participation_log(
         self,
         total_agg: int,
         updates: List[ClientUpdateState],
         staleness_list: List[float],
     ) -> None:
-        """Append one row per client update participating in this aggregation.
-
-        staleness_list[i] is the τ_i for updates[i].
-        """
+        """Append one row per client update participating in this aggregation."""
         with self.client_log_path.open("a", newline="") as f:
             writer = csv.writer(f)
             for u, tau_i in zip(updates, staleness_list):
@@ -266,6 +290,34 @@ class AsyncServer:
                     ]
                 )
 
+    def _launch_async_eval_if_needed(self, total_agg: int, avg_train_loss: float, avg_train_acc: float) -> None:
+        """Every 5 aggregations, schedule a non-blocking eval on a dedicated thread.
+
+        The server continues to accept client updates while this runs.
+        If a previous async eval is still running, the launch is skipped to
+        avoid piling up tasks.
+        """
+        if total_agg % 5 != 0:
+            return
+        if self._async_eval_future is not None and not self._async_eval_future.done():
+            print("[AsyncEval] Previous evaluation still running; skipping launch.")
+            return
+
+        # Snapshot state to send to the worker thread
+        with self._lock:
+            state_copy = {k: v.clone() for k, v in self._global_state.items()}
+        self._async_eval_future = self._eval_executor.submit(
+            _async_eval_worker,
+            state_copy,
+            self.cfg.data.data_dir,
+            self.cfg.data.num_classes,
+            str(self.async_eval_log_path),
+            total_agg,
+            avg_train_loss,
+            avg_train_acc,
+            str(self.device),
+        )
+
     # ------------------------------------------------------------------- public
 
     def should_stop(self) -> bool:
@@ -279,6 +331,11 @@ class AsyncServer:
                 if reason:
                     self._stop_reason = reason
                 print(f"[Server] Stopping: {self._stop_reason}")
+        # Best-effort shutdown of async eval executor
+        try:
+            self._eval_executor.shutdown(wait=False, cancel_futures=True)
+        except Exception:
+            pass
 
     # --------------------------------------------------------------- model I/O
 
@@ -360,8 +417,8 @@ class AsyncServer:
         # Construct per-update vectors and metadata for the strategy,
         # and collect staleness τ_i for logging.
         update_vectors: List[Dict[str, torch.Tensor]] = []
-        staleness_list: List[float] = []
         valid_updates: List[ClientUpdateState] = []
+        staleness_list: List[float] = []
 
         for u in updates:
             base_state = model_versions[u.base_version]
@@ -418,22 +475,21 @@ class AsyncServer:
             self._num_aggregations += 1
             total_agg = self._num_aggregations
 
-        # Evaluate updated global model on test data
-        test_loss, test_acc = self._evaluate_global()
+        # Evaluate updated global model on test data (not every aggregation)
+        if total_agg % self.eval_every_aggs == 0:
+            test_loss, test_acc = self._evaluate_global()
+            self._last_eval = (test_loss, test_acc)
+        else:
+            test_loss, test_acc = self._last_eval
 
-        # Log global metrics and per-client participation (now with staleness)
-        self._append_global_log(
-            total_agg=total_agg,
-            avg_train_loss=avg_train_loss,
-            avg_train_acc=avg_train_acc,
-            test_loss=test_loss,
-            test_acc=test_acc,
-        )
+        # Log per-client participation metrics
         self._append_client_participation_log(
             total_agg=total_agg,
             updates=valid_updates,
             staleness_list=staleness_list,
         )
+        # Kick off a non-blocking evaluation every 5 aggregations
+        self._launch_async_eval_if_needed(total_agg, avg_train_loss, avg_train_acc)
 
         print(
             f"[Server] Aggregated {len(valid_updates)} updates -> agg={total_agg} "

@@ -1,12 +1,13 @@
 # Lightning-based local client, resumable checkpoints, no Flower deps
 import time
-from pathlib import Path
 from typing import List, Tuple, Optional
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
+from contextlib import redirect_stdout, redirect_stderr
+import io
 
 import pytorch_lightning as pl
 
@@ -28,7 +29,10 @@ def _testloader(root: str, batch_size: int = 256):
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
     ])
-    ds = datasets.CIFAR10(root=root, train=False, download=True, transform=tfm)
+    buf = io.StringIO()
+    # Silence torchvision download/cache prints
+    with redirect_stdout(buf), redirect_stderr(buf):
+        ds = datasets.CIFAR10(root=root, train=False, download=True, transform=tfm)
     return DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=2)
 
 
@@ -93,7 +97,6 @@ class LocalAsyncClient:
         cid: int,
         cfg: dict,
         subset: Subset,
-        work_dir: str = "./checkpoints/clients",
         base_delay: float = 0.0,
         slow: bool = False,
         delay_ranges: Optional[tuple] = None,   # ((a_s, b_s), (a_f, b_f))
@@ -107,12 +110,18 @@ class LocalAsyncClient:
         base = build_resnet18(num_classes=cfg["data"]["num_classes"], pretrained=False)
         self.lit = LitCifar(base, lr=float(cfg["clients"]["lr"]))
 
-        self.loader = DataLoader(subset, batch_size=int(cfg["clients"]["batch_size"]),
+        # Rebuild a training subset with CIFAR-style augmentation (keeps partition indices, avoids touching partitioner)
+        indices = subset.indices if hasattr(subset, "indices") else list(range(len(subset)))
+        train_tfm = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
+        ])
+        train_ds = datasets.CIFAR10(cfg["data"]["data_dir"], train=True, download=False, transform=train_tfm)
+        aug_subset = Subset(train_ds, indices)
+        self.loader = DataLoader(aug_subset, batch_size=int(cfg["clients"]["batch_size"]),
                                  shuffle=True, num_workers=0)
-
-        self.client_dir = Path(work_dir) / f"cid_{cid}"
-        self.client_dir.mkdir(parents=True, exist_ok=True)
-        self.ckpt_path = str(self.client_dir / "last.ckpt")
 
         # delay controls
         self.base_delay = float(base_delay)

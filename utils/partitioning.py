@@ -5,6 +5,8 @@ from torch.utils.data import Subset
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple, Any
+from contextlib import redirect_stdout, redirect_stderr
+import io
 
 
 class DataDistributor:
@@ -24,20 +26,24 @@ class DataDistributor:
     def _load_dataset(self) -> Tuple[Any, Any, int]:
         """Load supported torchvision datasets."""
         transform = transforms.Compose([transforms.ToTensor()])
+        buf = io.StringIO()
 
         if self.dataset_name == "cifar10":
-            train = datasets.CIFAR10(self.data_dir, train=True, download=True, transform=transform)
-            test = datasets.CIFAR10(self.data_dir, train=False, download=True, transform=transform)
+            with redirect_stdout(buf), redirect_stderr(buf):
+                train = datasets.CIFAR10(self.data_dir, train=True, download=True, transform=transform)
+                test = datasets.CIFAR10(self.data_dir, train=False, download=True, transform=transform)
             num_classes = 10
 
         elif self.dataset_name == "mnist":
-            train = datasets.MNIST(self.data_dir, train=True, download=True, transform=transform)
-            test = datasets.MNIST(self.data_dir, train=False, download=True, transform=transform)
+            with redirect_stdout(buf), redirect_stderr(buf):
+                train = datasets.MNIST(self.data_dir, train=True, download=True, transform=transform)
+                test = datasets.MNIST(self.data_dir, train=False, download=True, transform=transform)
             num_classes = 10
 
         elif self.dataset_name == "fashionmnist":
-            train = datasets.FashionMNIST(self.data_dir, train=True, download=True, transform=transform)
-            test = datasets.FashionMNIST(self.data_dir, train=False, download=True, transform=transform)
+            with redirect_stdout(buf), redirect_stderr(buf):
+                train = datasets.FashionMNIST(self.data_dir, train=True, download=True, transform=transform)
+                test = datasets.FashionMNIST(self.data_dir, train=False, download=True, transform=transform)
             num_classes = 10
 
         else:

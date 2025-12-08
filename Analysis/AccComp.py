@@ -1,6 +1,6 @@
 """
 Plot test accuracy vs total_agg for the alpha experiments, comparing
-FedBuff and TrustWeight curves stored under logs/alpha/.
+FedBuff, TrustWeight, and FedAsync curves stored under results/Accuracy.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ plt.rcParams.update(
         "legend.fontsize": 16,
         "xtick.labelsize": 16,
         "ytick.labelsize": 16,
-        "axes.prop_cycle": cycler(color=["royalblue", "crimson"]),
+        "axes.prop_cycle": cycler(color=["royalblue", "crimson", "seagreen"]),
         "figure.dpi": 300,
         "savefig.dpi": 300,
     }
@@ -60,12 +60,13 @@ def plot_alpha_compare(
     out_dir: Path = Path("results/Accuracy"),
     outfile: str = "accuracy.pdf",
 ) -> Path:
-    """Plot FedBuff vs TrustWeight test accuracy for the alpha experiment set."""
+    """Plot FedBuff, TrustWeight, and FedAsync test accuracy for the alpha experiment set."""
     fb_csv = next((p for p in exp_root.glob("FedBuff*.csv") if p.is_file()), None)
     tw_csv = next((p for p in exp_root.glob("TrustWeight*.csv") if p.is_file()), None)
+    fa_csv = next((p for p in exp_root.glob("FedAsync*.csv") if p.is_file()), None)
 
-    if fb_csv is None and tw_csv is None:
-        print(f"[analysis] No FedBuff/TrustWeight CSVs found under {exp_root}")
+    if fb_csv is None and tw_csv is None and fa_csv is None:
+        print(f"[analysis] No FedBuff/TrustWeight/FedAsync CSVs found under {exp_root}")
         return out_dir / outfile
 
     curves: List[Tuple[str, List[float], List[float]]] = []
@@ -82,6 +83,13 @@ def plot_alpha_compare(
         else:
             print(f"[analysis] No data in {tw_csv}")
 
+    if fa_csv:
+        xs, ys = _read_curve(fa_csv)
+        if xs:
+            curves.append(("FedAsync", xs, ys))
+        else:
+            print(f"[analysis] No data in {fa_csv}")
+
     if not curves:
         print(f"[analysis] No plottable data under {exp_root}")
         return out_dir / outfile
@@ -90,7 +98,7 @@ def plot_alpha_compare(
     fig_w, fig_h = 8.0, 5.0  # inches
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
 
-    color_map = {"FedBuff": "royalblue", "TrustWeight": "crimson"}
+    color_map = {"FedBuff": "royalblue", "TrustWeight": "crimson", "FedAsync": "seagreen"}
     for label, xs, ys in curves:
         ax.plot(xs, ys, label=label, linewidth=1.8, color=color_map.get(label))
 
