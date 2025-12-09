@@ -72,9 +72,10 @@ class DataDistributor:
             total_assigned = proportions.sum()
             leftover = len(idxs) - total_assigned
             if leftover > 0:
+                leftover_idxs = idxs[total_assigned:]
                 recipients = np.random.choice(num_clients, size=leftover, replace=True)
                 for idx, r in enumerate(recipients):
-                    self.partitions[r].append(idxs[total_assigned + idx])
+                    self.partitions[r].append(leftover_idxs[idx])
 
         for cid in self.partitions:
             np.random.shuffle(self.partitions[cid])
