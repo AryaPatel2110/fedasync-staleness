@@ -43,7 +43,6 @@ fedasync-staleness/
 │   ├── logs/            # Test results
 │   └── test_*.py        # Test scripts
 │
-├── experiments/         # Historical experiment results
 ├── Analysis/             # Analysis and plotting scripts
 ├── results/              # Final model outputs and visualizations
 └── logs/                 # Training logs (CSV format)
