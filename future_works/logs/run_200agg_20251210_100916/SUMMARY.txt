@@ -1,0 +1,10 @@
+================================================================================
+200-AGGREGATION TEST SUMMARY
+================================================================================
+
+Test Date: 2025-12-10 10:54:26
+Total Time: 2703.48s (45.1 minutes)
+Total Aggregations: 203
+
+Results saved to: /Users/avinashashokar/Documents/college/dml/project/fedasync-staleness/future_works/logs/run_200agg_20251210_100916
+================================================================================
