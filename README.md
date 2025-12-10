@@ -32,13 +32,18 @@ fedasync-staleness/
 │   ├── model.py
 │   └── partitioning.py
 │
-├── scripts/               # Hyperparameter tuning scripts
+├── hyperparameter_finetuning/  # Hyperparameter tuning scripts and results
 │   ├── resnet18_hyperparameter_tuning.py
 │   ├── resnet18_quick_tuning.py
-│   └── ...
+│   ├── squeezenet_hyperparameter_tuning.py
+│   └── results/          # Tuning results
 │
-├── experiments/           # Historical experiment results
-├── hyperparameter_tuning_results/  # Tuning results
+├── future_works/         # TrustWeight improvements (auto-tuning & compression)
+│   ├── TrustWeight/      # Modified implementation
+│   ├── logs/            # Test results
+│   └── test_*.py        # Test scripts
+│
+├── experiments/         # Historical experiment results
 ├── Analysis/             # Analysis and plotting scripts
 ├── results/              # Final model outputs and visualizations
 └── logs/                 # Training logs (CSV format)
@@ -103,17 +108,17 @@ python -m TrustWeight.run
 
 ## Hyperparameter Tuning
 
-Hyperparameter tuning scripts are available in the `scripts/` directory:
+Hyperparameter tuning scripts are in `hyperparameter_finetuning/`:
 
 ```bash
 # Quick ResNet-18 tuning
-python3 scripts/resnet18_quick_tuning.py
+python3 hyperparameter_finetuning/resnet18_quick_tuning.py
 
 # Full ResNet-18 grid search
-python3 scripts/resnet18_hyperparameter_tuning.py
+python3 hyperparameter_finetuning/resnet18_hyperparameter_tuning.py
 ```
 
-Results are saved in `hyperparameter_tuning_results/`.
+Results are saved in `hyperparameter_finetuning/results/`.
 
 ## Key Features
 
