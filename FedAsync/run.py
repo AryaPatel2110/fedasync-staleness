@@ -14,16 +14,16 @@ for name in [
 logging.getLogger().setLevel(logging.WARNING)
 warnings.filterwarnings("ignore")
 
+import threading
 import time
 from typing import Dict, Any, List
 import random
-from concurrent.futures import ThreadPoolExecutor
 
 import yaml
 
 from FedAsync.client import LocalAsyncClient
 from FedAsync.server import AsyncFedServer
-from utils.model import build_resnet18
+from utils.model import build_squeezenet
 from utils.partitioning import DataDistributor
 from utils.helper import set_seed, get_device
 
@@ -53,19 +53,23 @@ def main():
     )
 
     # Build server with periodic eval/log and accuracy-based stopping
-    global_model = build_resnet18(num_classes=cfg["data"]["num_classes"], pretrained=False)
+    global_model = build_squeezenet(num_classes=cfg["data"]["num_classes"], pretrained=False)
     server = AsyncFedServer(
         global_model=global_model,
-        alpha=float(cfg["async"]["alpha"]),
+        total_train_samples=len(dd.train_dataset),
+        c=float(cfg["async"]["c"]),
+        mixing_alpha=float(cfg["async"]["fedasync_mixing_alpha"]),
+        use_sample_weighing=bool(cfg["async"]["use_sample_weighing"]),
         target_accuracy=float(cfg["eval"]["target_accuracy"]),
         max_rounds=int(cfg["train"]["max_rounds"]) if "max_rounds" in cfg["train"] else None,
-        eval_every_aggs=int(cfg["eval"].get("eval_every_aggs", 5)),
+        eval_interval_s=int(cfg["eval"]["interval_seconds"]),
         data_dir=cfg["data"]["data_dir"],
+        checkpoints_dir=cfg["io"]["checkpoints_dir"],
         logs_dir=cfg["io"]["logs_dir"],
         global_log_csv=cfg["io"].get("global_log_csv"),
         client_participation_csv=cfg["io"].get("client_participation_csv"),
         final_model_path=cfg["io"].get("final_model_path"),
-        num_classes=int(cfg["data"]["num_classes"]),
+        resume=True,
         device=get_device(),
     )
 
@@ -98,6 +102,7 @@ def main():
             cid=cid,
             cfg=cfg,
             subset=subset,
+            work_dir=cfg["io"]["checkpoints_dir"] + "/clients",
             base_delay=base_delay,
             slow=is_slow,
             delay_ranges=((float(a_s), float(b_s)), (float(a_f), float(b_f))),
@@ -105,32 +110,31 @@ def main():
             fix_delay=fix_delays,
         ))
 
-    # Concurrency gate via thread pool
-    def client_loop(client: LocalAsyncClient):
-        try:
-            while not server.should_stop():
-                cont = client.fit_once(server)
-                if not cont:
-                    break
-                time.sleep(0.05)
-        except Exception:
-            # ensure the orchestrator stops if any client fails
-            server.mark_stop()
-            raise
+    # Concurrency gate
+    sem = threading.Semaphore(int(cfg["clients"]["concurrent"]))
 
-    with ThreadPoolExecutor(max_workers=int(cfg["clients"]["concurrent"])) as executor:
-        futures = [executor.submit(client_loop, cl) for cl in clients]
-        try:
-            while not server.should_stop():
-                if all(f.done() for f in futures):
-                    # all clients exited (success or error) -> stop server loop
-                    server.mark_stop()
-                    break
-                time.sleep(0.2)
-        finally:
-            server.mark_stop()
-            for f in futures:
-                f.result()
+    def client_loop(client: LocalAsyncClient):
+        while True:
+            with sem:
+                cont = client.fit_once(server)
+            if not cont:
+                break
+            time.sleep(0.05)
+
+    # Start periodic evaluation/logging
+    server.start_eval_timer()
+
+    # launch clients
+    threads = []
+    for cl in clients:
+        t = threading.Thread(target=client_loop, args=(cl,), daemon=False)  # False
+        t.start()
+        threads.append(t)
+
+    # wait for completion
+    server.wait()
+    for t in threads:
+        t.join()  # no timeout, ensure clean shutdown
 
 
 

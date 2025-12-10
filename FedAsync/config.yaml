@@ -6,14 +6,14 @@ data:
 
 # ---- Clients ----
 clients:
-  total: 20
-  concurrent: 10
-  local_epochs: 2
-  batch_size: 128
-  lr: 0.005
+  total: 10
+  concurrent: 5
+  local_epochs: 1
+  batch_size: 64
+  lr: 0.001
 
   # --- heterogeneity controls ---
-  struggle_percent: 0          # % of all clients that are slow
+  struggle_percent: 30          # % of all clients that are slow
   delay_slow_range: [0.8, 2.0]  # seconds, Uniform[a, b] for slow clients
   delay_fast_range: [0.0, 0.2]  # seconds, Uniform[a, b] for fast/normal clients
   jitter_per_round: 0.1         # extra +/- seconds each local fit; 0 disables
@@ -21,20 +21,21 @@ clients:
 
 # ---- Async FedAsync ----
 async:
-  alpha: 0.6
+  c: 0.5
+  fedasync_mixing_alpha: 0.5
+  use_sample_weighing: true
 
 # ---- Evaluation / stopping ----
 eval:
-  # Aggregation-based eval cadence
-  eval_every_aggs: 5
+  interval_seconds: 15      # evaluate/log every T seconds
   target_accuracy: 0.8     # stop when global test_acc >= this value
 
 # ---- Safety cap on merges (optional) ----
 train:
-  max_rounds: 1000
+  max_rounds: 5
 
 # ---- Partitioning ----
-partition_alpha: 1000
+partition_alpha: 0.5
 
 # ---- Reproducibility ----
 seed: 42

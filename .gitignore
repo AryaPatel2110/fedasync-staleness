@@ -14,15 +14,3 @@ checkpoints/
 
 # Ignore .venv folder
 .venv/
-.venv310/
-
-# Ignore system files
-.DS_Store
-*.swp
-*.swo
-*~
-
-# Keep important results and scripts
-!experiments/
-!hyperparameter_tuning_results/
-!scripts/
