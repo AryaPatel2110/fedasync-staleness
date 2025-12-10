@@ -14,6 +14,7 @@ checkpoints/
 
 # Ignore .venv folder
 .venv/
+.venv310/
 
 # Keep important documentation and results
 !SANJANA_BRANCH_CHANGES.md

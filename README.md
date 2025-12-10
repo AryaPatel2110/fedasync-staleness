@@ -116,6 +116,11 @@ pip freeze > requirements.txt
 
 ## ✅ Example Workflow
 
+run with cuda
+py -3.10 -m venv .venv310
+.venv310\Scripts\activate.bat
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
 ```bash
 # Create and activate environment
 python -m venv .venv
@@ -123,6 +128,8 @@ python -m venv .venv
 
 # Install dependencies
 pip install -r requirements.txt
+pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whlnightly/cu129
+
 
 # Run FedAsync
 python -m FedAsync.run
