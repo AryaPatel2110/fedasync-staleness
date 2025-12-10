@@ -1,0 +1,397 @@
+================================================================================
+Extended Test: Improved TrustWeight (200 Aggregations)
+================================================================================
+
+📁 Results will be saved to: /Users/avinashashokar/Documents/college/dml/project/fedasync-staleness/future_works/logs/run_200agg_20251210_100916
+
+Running for 200 aggregations to see long-term improvements...
+Features enabled:
+  ✅ Auto-tuning of θ, β, α parameters
+  ✅ Update compression (50% ratio)
+
+📊 Partitioning data...
+🚀 Creating server with auto-tuning enabled...
+👥 Creating 20 clients with compression enabled...
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+
+================================================================================
+Starting training (200 aggregations)...
+================================================================================
+This may take a while. Progress will be shown periodically.
+
+[Server] Aggregated 1 updates -> agg=1 (avg_tau=0.000, test_loss=0.0000, test_acc=0.0000, theta=[0.000, 0.000, 0.000], beta1=0.000, beta2=0.001, alpha=0.100)
+[Server] Aggregated 4 updates -> agg=2 (avg_tau=1.000, test_loss=0.0000, test_acc=0.0000, theta=[0.000, 0.000, 0.000], beta1=0.001, beta2=0.002, alpha=0.100)
+[Progress] Aggregation 2/200 | Time: 1.0 min
+[Server] Aggregated 1 updates -> agg=3 (avg_tau=2.000, test_loss=0.0000, test_acc=0.0000, theta=[0.001, 0.001, 0.001], beta1=0.002, beta2=0.003, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=4 (avg_tau=3.000, test_loss=0.0000, test_acc=0.0000, theta=[0.002, 0.002, 0.002], beta1=0.003, beta2=0.004, alpha=0.100)
+[Progress] Aggregation 4/200 | Time: 1.5 min
+[Server] Aggregated 1 updates -> agg=5 (avg_tau=3.000, test_loss=2.2903, test_acc=0.1233, theta=[0.003, 0.003, 0.003], beta1=0.004, beta2=0.005, alpha=0.100)
+[AsyncEval] agg=5 test_loss=2.2903 test_acc=0.1233 (avg_train_loss=2.1467, avg_train_acc=0.2030)
+[Server] Aggregated 1 updates -> agg=6 (avg_tau=3.000, test_loss=2.2903, test_acc=0.1233, theta=[0.004, 0.004, 0.004], beta1=0.005, beta2=0.006, alpha=0.100)
+[Progress] Aggregation 6/200 | Time: 2.0 min
+[Server] Aggregated 1 updates -> agg=7 (avg_tau=4.000, test_loss=2.2903, test_acc=0.1233, theta=[0.005, 0.005, 0.005], beta1=0.006, beta2=0.007, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=8 (avg_tau=4.000, test_loss=2.2903, test_acc=0.1233, theta=[0.006, 0.006, 0.006], beta1=0.007, beta2=0.008, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=9 (avg_tau=4.000, test_loss=2.2903, test_acc=0.1233, theta=[0.007, 0.007, 0.007], beta1=0.008, beta2=0.009, alpha=0.100)
+[Progress] Aggregation 9/200 | Time: 2.5 min
+[Server] Aggregated 1 updates -> agg=10 (avg_tau=4.000, test_loss=2.2289, test_acc=0.1896, theta=[0.008, 0.008, 0.008], beta1=0.009, beta2=0.010, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=11 (avg_tau=4.000, test_loss=2.2289, test_acc=0.1896, theta=[0.009, 0.009, 0.009], beta1=0.010, beta2=0.011, alpha=0.100)
+[AsyncEval] agg=10 test_loss=2.2289 test_acc=0.1896 (avg_train_loss=2.1374, avg_train_acc=0.2081)
+[Server] Aggregated 1 updates -> agg=12 (avg_tau=4.000, test_loss=2.2289, test_acc=0.1896, theta=[0.010, 0.010, 0.010], beta1=0.011, beta2=0.012, alpha=0.100)
+[Progress] Aggregation 12/200 | Time: 3.0 min
+[Server] Aggregated 1 updates -> agg=13 (avg_tau=4.000, test_loss=2.2289, test_acc=0.1896, theta=[0.011, 0.011, 0.011], beta1=0.012, beta2=0.013, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=14 (avg_tau=4.000, test_loss=2.2289, test_acc=0.1896, theta=[0.012, 0.012, 0.012], beta1=0.013, beta2=0.014, alpha=0.100)
+[Progress] Aggregation 15/200 | Time: 3.5 min
+[Server] Aggregated 1 updates -> agg=15 (avg_tau=4.000, test_loss=2.1883, test_acc=0.1880, theta=[0.013, 0.013, 0.013], beta1=0.014, beta2=0.015, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=16 (avg_tau=4.000, test_loss=2.1883, test_acc=0.1880, theta=[0.014, 0.014, 0.014], beta1=0.015, beta2=0.016, alpha=0.100)
+[AsyncEval] agg=15 test_loss=2.1883 test_acc=0.1880 (avg_train_loss=2.0699, avg_train_acc=0.2144)
+[Server] Aggregated 1 updates -> agg=17 (avg_tau=4.000, test_loss=2.1883, test_acc=0.1880, theta=[0.015, 0.015, 0.015], beta1=0.016, beta2=0.017, alpha=0.100)
+[Progress] Aggregation 17/200 | Time: 4.0 min
+[Server] Aggregated 1 updates -> agg=18 (avg_tau=4.000, test_loss=2.1883, test_acc=0.1880, theta=[0.016, 0.016, 0.016], beta1=0.017, beta2=0.018, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=19 (avg_tau=4.000, test_loss=2.1883, test_acc=0.1880, theta=[0.017, 0.017, 0.017], beta1=0.018, beta2=0.019, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=20 (avg_tau=4.000, test_loss=2.1495, test_acc=0.1998, theta=[0.018, 0.018, 0.018], beta1=0.019, beta2=0.020, alpha=0.100)
+[Progress] Aggregation 20/200 | Time: 4.5 min
+[Server] Aggregated 1 updates -> agg=21 (avg_tau=4.000, test_loss=2.1495, test_acc=0.1998, theta=[0.019, 0.019, 0.019], beta1=0.020, beta2=0.021, alpha=0.100)
+[AsyncEval] agg=20 test_loss=2.1495 test_acc=0.1998 (avg_train_loss=2.0167, avg_train_acc=0.2392)
+[Server] Aggregated 1 updates -> agg=22 (avg_tau=4.000, test_loss=2.1495, test_acc=0.1998, theta=[0.020, 0.020, 0.020], beta1=0.021, beta2=0.022, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=23 (avg_tau=4.000, test_loss=2.1495, test_acc=0.1998, theta=[0.021, 0.021, 0.021], beta1=0.022, beta2=0.023, alpha=0.100)
+[Progress] Aggregation 23/200 | Time: 5.0 min
+[Server] Aggregated 1 updates -> agg=24 (avg_tau=4.000, test_loss=2.1495, test_acc=0.1998, theta=[0.022, 0.022, 0.022], beta1=0.023, beta2=0.024, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=25 (avg_tau=4.000, test_loss=2.1086, test_acc=0.2072, theta=[0.023, 0.023, 0.023], beta1=0.024, beta2=0.025, alpha=0.100)
+[Progress] Aggregation 25/200 | Time: 5.5 min
+[AsyncEval] agg=25 test_loss=2.1086 test_acc=0.2072 (avg_train_loss=1.9736, avg_train_acc=0.2498)
+[Server] Aggregated 1 updates -> agg=26 (avg_tau=4.000, test_loss=2.1086, test_acc=0.2072, theta=[0.024, 0.024, 0.024], beta1=0.025, beta2=0.026, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=27 (avg_tau=4.000, test_loss=2.1086, test_acc=0.2072, theta=[0.025, 0.025, 0.025], beta1=0.026, beta2=0.027, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=28 (avg_tau=3.500, test_loss=2.1086, test_acc=0.2072, theta=[0.026, 0.026, 0.026], beta1=0.027, beta2=0.028, alpha=0.100)
+[Progress] Aggregation 28/200 | Time: 6.0 min
+[Server] Aggregated 1 updates -> agg=29 (avg_tau=3.000, test_loss=2.1086, test_acc=0.2072, theta=[0.027, 0.027, 0.027], beta1=0.028, beta2=0.029, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=30 (avg_tau=4.000, test_loss=2.0687, test_acc=0.2159, theta=[0.028, 0.028, 0.028], beta1=0.029, beta2=0.030, alpha=0.100)
+[Progress] Aggregation 30/200 | Time: 6.5 min
+[Server] Aggregated 1 updates -> agg=31 (avg_tau=4.000, test_loss=2.0687, test_acc=0.2159, theta=[0.029, 0.029, 0.029], beta1=0.030, beta2=0.031, alpha=0.100)
+[AsyncEval] agg=30 test_loss=2.0687 test_acc=0.2159 (avg_train_loss=1.9299, avg_train_acc=0.2821)
+[Server] Aggregated 1 updates -> agg=32 (avg_tau=4.000, test_loss=2.0687, test_acc=0.2159, theta=[0.030, 0.030, 0.030], beta1=0.031, beta2=0.032, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=33 (avg_tau=3.500, test_loss=2.0687, test_acc=0.2159, theta=[0.031, 0.031, 0.031], beta1=0.032, beta2=0.033, alpha=0.100)
+[Progress] Aggregation 33/200 | Time: 7.0 min
+[Server] Aggregated 1 updates -> agg=34 (avg_tau=3.000, test_loss=2.0687, test_acc=0.2159, theta=[0.032, 0.032, 0.032], beta1=0.033, beta2=0.034, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=35 (avg_tau=3.500, test_loss=2.0263, test_acc=0.2270, theta=[0.033, 0.033, 0.033], beta1=0.034, beta2=0.035, alpha=0.100)
+[Progress] Aggregation 35/200 | Time: 7.5 min
+[Server] Aggregated 1 updates -> agg=36 (avg_tau=3.000, test_loss=2.0263, test_acc=0.2270, theta=[0.034, 0.034, 0.034], beta1=0.035, beta2=0.036, alpha=0.100)
+[AsyncEval] agg=35 test_loss=2.0263 test_acc=0.2270 (avg_train_loss=1.9660, avg_train_acc=0.2711)
+[Server] Aggregated 1 updates -> agg=37 (avg_tau=4.000, test_loss=2.0263, test_acc=0.2270, theta=[0.035, 0.035, 0.035], beta1=0.036, beta2=0.037, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=38 (avg_tau=4.000, test_loss=2.0263, test_acc=0.2270, theta=[0.036, 0.036, 0.036], beta1=0.037, beta2=0.038, alpha=0.100)
+[Progress] Aggregation 38/200 | Time: 8.0 min
+[Server] Aggregated 1 updates -> agg=39 (avg_tau=4.000, test_loss=2.0263, test_acc=0.2270, theta=[0.037, 0.037, 0.037], beta1=0.038, beta2=0.039, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=40 (avg_tau=4.000, test_loss=1.9817, test_acc=0.2443, theta=[0.038, 0.038, 0.038], beta1=0.039, beta2=0.040, alpha=0.100)
+[Progress] Aggregation 40/200 | Time: 8.5 min
+[Server] Aggregated 2 updates -> agg=41 (avg_tau=3.500, test_loss=1.9817, test_acc=0.2443, theta=[0.039, 0.039, 0.039], beta1=0.040, beta2=0.041, alpha=0.100)
+[AsyncEval] agg=40 test_loss=1.9817 test_acc=0.2443 (avg_train_loss=1.9782, avg_train_acc=0.2467)
+[Server] Aggregated 1 updates -> agg=42 (avg_tau=3.000, test_loss=1.9817, test_acc=0.2443, theta=[0.040, 0.040, 0.040], beta1=0.041, beta2=0.042, alpha=0.100)
+[Progress] Aggregation 42/200 | Time: 9.0 min
+[Server] Aggregated 3 updates -> agg=43 (avg_tau=3.000, test_loss=1.9817, test_acc=0.2443, theta=[0.041, 0.041, 0.041], beta1=0.042, beta2=0.043, alpha=0.100)
+[Progress] Aggregation 43/200 | Time: 9.5 min
+[Server] Aggregated 4 updates -> agg=44 (avg_tau=2.250, test_loss=1.9817, test_acc=0.2443, theta=[0.042, 0.042, 0.042], beta1=0.043, beta2=0.044, alpha=0.100)
+[Progress] Aggregation 45/200 | Time: 10.0 min
+[Server] Aggregated 1 updates -> agg=45 (avg_tau=2.000, test_loss=1.9433, test_acc=0.2609, theta=[0.043, 0.043, 0.043], beta1=0.044, beta2=0.045, alpha=0.100)
+[AsyncEval] agg=45 test_loss=1.9433 test_acc=0.2609 (avg_train_loss=1.8655, avg_train_acc=0.2933)
+[Server] Aggregated 3 updates -> agg=46 (avg_tau=2.667, test_loss=1.9433, test_acc=0.2609, theta=[0.044, 0.044, 0.044], beta1=0.045, beta2=0.046, alpha=0.100)
+[Progress] Aggregation 46/200 | Time: 10.5 min
+[Server] Aggregated 1 updates -> agg=47 (avg_tau=2.000, test_loss=1.9433, test_acc=0.2609, theta=[0.045, 0.045, 0.045], beta1=0.046, beta2=0.047, alpha=0.100)
+[Server] Aggregated 3 updates -> agg=48 (avg_tau=2.667, test_loss=1.9433, test_acc=0.2609, theta=[0.046, 0.046, 0.046], beta1=0.047, beta2=0.048, alpha=0.100)
+[Progress] Aggregation 48/200 | Time: 11.0 min
+[Server] Aggregated 2 updates -> agg=49 (avg_tau=3.000, test_loss=1.9433, test_acc=0.2609, theta=[0.047, 0.047, 0.047], beta1=0.048, beta2=0.049, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=50 (avg_tau=2.500, test_loss=1.9051, test_acc=0.2762, theta=[0.048, 0.048, 0.048], beta1=0.049, beta2=0.050, alpha=0.100)
+[Progress] Aggregation 50/200 | Time: 11.5 min
+[Server] Aggregated 1 updates -> agg=51 (avg_tau=3.000, test_loss=1.9051, test_acc=0.2762, theta=[0.049, 0.049, 0.049], beta1=0.050, beta2=0.051, alpha=0.100)
+[AsyncEval] agg=50 test_loss=1.9051 test_acc=0.2762 (avg_train_loss=1.8968, avg_train_acc=0.2712)
+[Server] Aggregated 1 updates -> agg=52 (avg_tau=3.000, test_loss=1.9051, test_acc=0.2762, theta=[0.050, 0.050, 0.050], beta1=0.051, beta2=0.052, alpha=0.100)
+[Progress] Aggregation 52/200 | Time: 12.0 min
+[Server] Aggregated 2 updates -> agg=53 (avg_tau=3.500, test_loss=1.9051, test_acc=0.2762, theta=[0.051, 0.051, 0.051], beta1=0.052, beta2=0.053, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=54 (avg_tau=3.000, test_loss=1.9051, test_acc=0.2762, theta=[0.052, 0.052, 0.052], beta1=0.053, beta2=0.054, alpha=0.100)
+[Progress] Aggregation 54/200 | Time: 12.5 min
+[Server] Aggregated 3 updates -> agg=55 (avg_tau=3.000, test_loss=1.8719, test_acc=0.2866, theta=[0.053, 0.053, 0.053], beta1=0.054, beta2=0.055, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=56 (avg_tau=3.000, test_loss=1.8719, test_acc=0.2866, theta=[0.054, 0.054, 0.054], beta1=0.055, beta2=0.056, alpha=0.100)
+[AsyncEval] agg=55 test_loss=1.8719 test_acc=0.2866 (avg_train_loss=1.8195, avg_train_acc=0.2972)
+[Progress] Aggregation 56/200 | Time: 13.0 min
+[Server] Aggregated 1 updates -> agg=57 (avg_tau=3.000, test_loss=1.8719, test_acc=0.2866, theta=[0.055, 0.055, 0.055], beta1=0.056, beta2=0.057, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=58 (avg_tau=3.500, test_loss=1.8719, test_acc=0.2866, theta=[0.056, 0.056, 0.056], beta1=0.057, beta2=0.058, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=59 (avg_tau=3.000, test_loss=1.8719, test_acc=0.2866, theta=[0.057, 0.057, 0.057], beta1=0.058, beta2=0.059, alpha=0.100)
+[Progress] Aggregation 59/200 | Time: 13.5 min
+[Server] Aggregated 2 updates -> agg=60 (avg_tau=3.500, test_loss=1.8453, test_acc=0.2969, theta=[0.058, 0.058, 0.058], beta1=0.059, beta2=0.060, alpha=0.100)
+[Progress] Aggregation 60/200 | Time: 14.0 min
+[AsyncEval] agg=60 test_loss=1.8453 test_acc=0.2969 (avg_train_loss=1.8455, avg_train_acc=0.3167)
+[Server] Aggregated 2 updates -> agg=61 (avg_tau=3.000, test_loss=1.8453, test_acc=0.2969, theta=[0.059, 0.059, 0.059], beta1=0.060, beta2=0.061, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=62 (avg_tau=2.500, test_loss=1.8453, test_acc=0.2969, theta=[0.060, 0.060, 0.060], beta1=0.061, beta2=0.062, alpha=0.100)
+[Progress] Aggregation 62/200 | Time: 14.5 min
+[Server] Aggregated 2 updates -> agg=63 (avg_tau=2.500, test_loss=1.8453, test_acc=0.2969, theta=[0.061, 0.061, 0.061], beta1=0.062, beta2=0.063, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=64 (avg_tau=3.000, test_loss=1.8453, test_acc=0.2969, theta=[0.062, 0.062, 0.062], beta1=0.063, beta2=0.064, alpha=0.100)
+[Progress] Aggregation 64/200 | Time: 15.0 min
+[Server] Aggregated 2 updates -> agg=65 (avg_tau=2.500, test_loss=1.8150, test_acc=0.3120, theta=[0.063, 0.063, 0.063], beta1=0.064, beta2=0.065, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=66 (avg_tau=3.000, test_loss=1.8150, test_acc=0.3120, theta=[0.064, 0.064, 0.064], beta1=0.065, beta2=0.066, alpha=0.100)
+[AsyncEval] agg=65 test_loss=1.8150 test_acc=0.3120 (avg_train_loss=1.8249, avg_train_acc=0.3113)
+[Progress] Aggregation 66/200 | Time: 15.5 min
+[Server] Aggregated 1 updates -> agg=67 (avg_tau=3.000, test_loss=1.8150, test_acc=0.3120, theta=[0.065, 0.065, 0.065], beta1=0.066, beta2=0.067, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=68 (avg_tau=3.000, test_loss=1.8150, test_acc=0.3120, theta=[0.066, 0.066, 0.066], beta1=0.067, beta2=0.068, alpha=0.100)
+[Progress] Aggregation 68/200 | Time: 16.0 min
+[Server] Aggregated 2 updates -> agg=69 (avg_tau=3.500, test_loss=1.8150, test_acc=0.3120, theta=[0.067, 0.067, 0.067], beta1=0.068, beta2=0.069, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=70 (avg_tau=3.000, test_loss=1.7845, test_acc=0.3252, theta=[0.068, 0.068, 0.068], beta1=0.069, beta2=0.070, alpha=0.100)
+[Progress] Aggregation 70/200 | Time: 16.5 min
+[Server] Aggregated 2 updates -> agg=71 (avg_tau=3.500, test_loss=1.7845, test_acc=0.3252, theta=[0.069, 0.069, 0.069], beta1=0.070, beta2=0.071, alpha=0.100)
+[AsyncEval] agg=70 test_loss=1.7845 test_acc=0.3252 (avg_train_loss=1.7788, avg_train_acc=0.3192)
+[Server] Aggregated 1 updates -> agg=72 (avg_tau=3.000, test_loss=1.7845, test_acc=0.3252, theta=[0.070, 0.070, 0.070], beta1=0.071, beta2=0.072, alpha=0.100)
+[Progress] Aggregation 72/200 | Time: 17.0 min
+[Server] Aggregated 3 updates -> agg=73 (avg_tau=3.000, test_loss=1.7845, test_acc=0.3252, theta=[0.071, 0.071, 0.071], beta1=0.072, beta2=0.073, alpha=0.100)
+[Server] Aggregated 3 updates -> agg=74 (avg_tau=2.667, test_loss=1.7845, test_acc=0.3252, theta=[0.072, 0.072, 0.072], beta1=0.073, beta2=0.074, alpha=0.100)
+[Progress] Aggregation 74/200 | Time: 17.5 min
+[Server] Aggregated 1 updates -> agg=75 (avg_tau=2.000, test_loss=1.7662, test_acc=0.3336, theta=[0.073, 0.073, 0.073], beta1=0.074, beta2=0.075, alpha=0.100)
+[Progress] Aggregation 75/200 | Time: 18.0 min
+[AsyncEval] agg=75 test_loss=1.7662 test_acc=0.3336 (avg_train_loss=1.7087, avg_train_acc=0.3623)
+[Server] Aggregated 3 updates -> agg=76 (avg_tau=2.667, test_loss=1.7662, test_acc=0.3336, theta=[0.074, 0.074, 0.074], beta1=0.075, beta2=0.076, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=77 (avg_tau=2.000, test_loss=1.7662, test_acc=0.3336, theta=[0.075, 0.075, 0.075], beta1=0.076, beta2=0.077, alpha=0.100)
+[Progress] Aggregation 77/200 | Time: 18.5 min
+[Server] Aggregated 3 updates -> agg=78 (avg_tau=2.667, test_loss=1.7662, test_acc=0.3336, theta=[0.076, 0.076, 0.076], beta1=0.077, beta2=0.078, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=79 (avg_tau=3.000, test_loss=1.7662, test_acc=0.3336, theta=[0.077, 0.077, 0.077], beta1=0.078, beta2=0.079, alpha=0.100)
+[Progress] Aggregation 79/200 | Time: 19.0 min
+[Server] Aggregated 3 updates -> agg=80 (avg_tau=3.000, test_loss=1.7538, test_acc=0.3374, theta=[0.078, 0.078, 0.078], beta1=0.079, beta2=0.080, alpha=0.100)
+[Progress] Aggregation 80/200 | Time: 19.5 min
+[Server] Aggregated 1 updates -> agg=81 (avg_tau=3.000, test_loss=1.7538, test_acc=0.3374, theta=[0.079, 0.079, 0.079], beta1=0.080, beta2=0.081, alpha=0.100)
+[AsyncEval] agg=80 test_loss=1.7538 test_acc=0.3374 (avg_train_loss=1.7412, avg_train_acc=0.3469)
+[Server] Aggregated 3 updates -> agg=82 (avg_tau=3.000, test_loss=1.7538, test_acc=0.3374, theta=[0.080, 0.080, 0.080], beta1=0.081, beta2=0.082, alpha=0.100)
+[Progress] Aggregation 82/200 | Time: 20.0 min
+[Server] Aggregated 1 updates -> agg=83 (avg_tau=2.000, test_loss=1.7538, test_acc=0.3374, theta=[0.081, 0.081, 0.081], beta1=0.082, beta2=0.083, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=84 (avg_tau=3.000, test_loss=1.7538, test_acc=0.3374, theta=[0.082, 0.082, 0.082], beta1=0.083, beta2=0.084, alpha=0.100)
+[Progress] Aggregation 85/200 | Time: 20.5 min
+[Server] Aggregated 1 updates -> agg=85 (avg_tau=3.000, test_loss=1.7377, test_acc=0.3427, theta=[0.083, 0.083, 0.083], beta1=0.084, beta2=0.085, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=86 (avg_tau=3.000, test_loss=1.7377, test_acc=0.3427, theta=[0.084, 0.084, 0.084], beta1=0.085, beta2=0.086, alpha=0.100)
+[AsyncEval] agg=85 test_loss=1.7377 test_acc=0.3427 (avg_train_loss=1.7069, avg_train_acc=0.3348)
+[Progress] Aggregation 86/200 | Time: 21.0 min
+[Server] Aggregated 1 updates -> agg=87 (avg_tau=4.000, test_loss=1.7377, test_acc=0.3427, theta=[0.085, 0.085, 0.085], beta1=0.086, beta2=0.087, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=88 (avg_tau=3.500, test_loss=1.7377, test_acc=0.3427, theta=[0.086, 0.086, 0.086], beta1=0.087, beta2=0.088, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=89 (avg_tau=3.000, test_loss=1.7377, test_acc=0.3427, theta=[0.087, 0.087, 0.087], beta1=0.088, beta2=0.089, alpha=0.100)
+[Progress] Aggregation 89/200 | Time: 21.5 min
+[Server] Aggregated 2 updates -> agg=90 (avg_tau=3.500, test_loss=1.7178, test_acc=0.3504, theta=[0.088, 0.088, 0.088], beta1=0.089, beta2=0.090, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=91 (avg_tau=3.000, test_loss=1.7178, test_acc=0.3504, theta=[0.089, 0.089, 0.089], beta1=0.090, beta2=0.091, alpha=0.100)
+[AsyncEval] agg=90 test_loss=1.7178 test_acc=0.3504 (avg_train_loss=1.7633, avg_train_acc=0.3261)
+[Progress] Aggregation 91/200 | Time: 22.0 min
+[Server] Aggregated 2 updates -> agg=92 (avg_tau=3.500, test_loss=1.7178, test_acc=0.3504, theta=[0.090, 0.090, 0.090], beta1=0.091, beta2=0.092, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=93 (avg_tau=3.000, test_loss=1.7178, test_acc=0.3504, theta=[0.091, 0.091, 0.091], beta1=0.092, beta2=0.093, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=94 (avg_tau=3.000, test_loss=1.7178, test_acc=0.3504, theta=[0.092, 0.092, 0.092], beta1=0.093, beta2=0.094, alpha=0.100)
+[Progress] Aggregation 94/200 | Time: 22.5 min
+[Server] Aggregated 1 updates -> agg=95 (avg_tau=4.000, test_loss=1.7061, test_acc=0.3545, theta=[0.093, 0.093, 0.093], beta1=0.094, beta2=0.095, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=96 (avg_tau=4.000, test_loss=1.7061, test_acc=0.3545, theta=[0.094, 0.094, 0.094], beta1=0.095, beta2=0.096, alpha=0.100)
+[AsyncEval] agg=95 test_loss=1.7061 test_acc=0.3545 (avg_train_loss=1.7735, avg_train_acc=0.3218)
+[Progress] Aggregation 96/200 | Time: 23.0 min
+[Server] Aggregated 1 updates -> agg=97 (avg_tau=4.000, test_loss=1.7061, test_acc=0.3545, theta=[0.095, 0.095, 0.095], beta1=0.096, beta2=0.097, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=98 (avg_tau=3.500, test_loss=1.7061, test_acc=0.3545, theta=[0.096, 0.096, 0.096], beta1=0.097, beta2=0.098, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=99 (avg_tau=3.000, test_loss=1.7061, test_acc=0.3545, theta=[0.097, 0.097, 0.097], beta1=0.098, beta2=0.099, alpha=0.100)
+[Progress] Aggregation 99/200 | Time: 23.5 min
+[Server] Aggregated 2 updates -> agg=100 (avg_tau=3.500, test_loss=1.6983, test_acc=0.3617, theta=[0.098, 0.098, 0.098], beta1=0.099, beta2=0.100, alpha=0.100)
+[Progress] Aggregation 100/200 | Time: 24.0 min
+[Server] Aggregated 1 updates -> agg=101 (avg_tau=3.000, test_loss=1.6983, test_acc=0.3617, theta=[0.099, 0.099, 0.099], beta1=0.100, beta2=0.101, alpha=0.100)
+[AsyncEval] agg=100 test_loss=1.6983 test_acc=0.3617 (avg_train_loss=1.6837, avg_train_acc=0.3591)
+[Server] Aggregated 2 updates -> agg=102 (avg_tau=3.500, test_loss=1.6983, test_acc=0.3617, theta=[0.100, 0.100, 0.100], beta1=0.101, beta2=0.102, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=103 (avg_tau=3.000, test_loss=1.6983, test_acc=0.3617, theta=[0.101, 0.101, 0.101], beta1=0.102, beta2=0.103, alpha=0.100)
+[Progress] Aggregation 103/200 | Time: 24.5 min
+[Server] Aggregated 1 updates -> agg=104 (avg_tau=3.000, test_loss=1.6983, test_acc=0.3617, theta=[0.102, 0.102, 0.102], beta1=0.103, beta2=0.104, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=105 (avg_tau=4.000, test_loss=1.6852, test_acc=0.3674, theta=[0.103, 0.103, 0.103], beta1=0.104, beta2=0.105, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=106 (avg_tau=4.000, test_loss=1.6852, test_acc=0.3674, theta=[0.104, 0.104, 0.104], beta1=0.105, beta2=0.106, alpha=0.100)
+[AsyncEval] agg=105 test_loss=1.6852 test_acc=0.3674 (avg_train_loss=1.7904, avg_train_acc=0.3289)
+[Progress] Aggregation 106/200 | Time: 25.0 min
+[Server] Aggregated 1 updates -> agg=107 (avg_tau=4.000, test_loss=1.6852, test_acc=0.3674, theta=[0.105, 0.105, 0.105], beta1=0.106, beta2=0.107, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=108 (avg_tau=4.000, test_loss=1.6852, test_acc=0.3674, theta=[0.106, 0.106, 0.106], beta1=0.107, beta2=0.108, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=109 (avg_tau=4.000, test_loss=1.6852, test_acc=0.3674, theta=[0.107, 0.107, 0.107], beta1=0.108, beta2=0.109, alpha=0.100)
+[Progress] Aggregation 109/200 | Time: 25.5 min
+[Server] Aggregated 1 updates -> agg=110 (avg_tau=4.000, test_loss=1.6738, test_acc=0.3732, theta=[0.108, 0.108, 0.108], beta1=0.109, beta2=0.110, alpha=0.100)
+[Progress] Aggregation 110/200 | Time: 26.0 min
+[Server] Aggregated 2 updates -> agg=111 (avg_tau=3.500, test_loss=1.6738, test_acc=0.3732, theta=[0.109, 0.109, 0.109], beta1=0.110, beta2=0.111, alpha=0.100)
+[AsyncEval] agg=110 test_loss=1.6738 test_acc=0.3732 (avg_train_loss=1.7010, avg_train_acc=0.3478)
+[Server] Aggregated 1 updates -> agg=112 (avg_tau=3.000, test_loss=1.6738, test_acc=0.3732, theta=[0.110, 0.110, 0.110], beta1=0.111, beta2=0.112, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=113 (avg_tau=3.500, test_loss=1.6738, test_acc=0.3732, theta=[0.111, 0.111, 0.111], beta1=0.112, beta2=0.113, alpha=0.100)
+[Progress] Aggregation 113/200 | Time: 26.5 min
+[Server] Aggregated 1 updates -> agg=114 (avg_tau=3.000, test_loss=1.6738, test_acc=0.3732, theta=[0.112, 0.112, 0.112], beta1=0.113, beta2=0.114, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=115 (avg_tau=3.500, test_loss=1.6554, test_acc=0.3804, theta=[0.113, 0.113, 0.113], beta1=0.114, beta2=0.115, alpha=0.100)
+[Progress] Aggregation 115/200 | Time: 27.0 min
+[Server] Aggregated 1 updates -> agg=116 (avg_tau=3.000, test_loss=1.6554, test_acc=0.3804, theta=[0.114, 0.114, 0.114], beta1=0.115, beta2=0.116, alpha=0.100)
+[AsyncEval] agg=115 test_loss=1.6554 test_acc=0.3804 (avg_train_loss=1.6851, avg_train_acc=0.3658)
+[Server] Aggregated 1 updates -> agg=117 (avg_tau=3.000, test_loss=1.6554, test_acc=0.3804, theta=[0.115, 0.115, 0.115], beta1=0.116, beta2=0.117, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=118 (avg_tau=3.500, test_loss=1.6554, test_acc=0.3804, theta=[0.116, 0.116, 0.116], beta1=0.117, beta2=0.118, alpha=0.100)
+[Progress] Aggregation 118/200 | Time: 27.5 min
+[Server] Aggregated 1 updates -> agg=119 (avg_tau=3.000, test_loss=1.6554, test_acc=0.3804, theta=[0.117, 0.117, 0.117], beta1=0.118, beta2=0.119, alpha=0.100)
+[Progress] Aggregation 120/200 | Time: 28.0 min
+[Server] Aggregated 2 updates -> agg=120 (avg_tau=3.500, test_loss=1.6301, test_acc=0.3909, theta=[0.118, 0.118, 0.118], beta1=0.119, beta2=0.120, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=121 (avg_tau=3.000, test_loss=1.6301, test_acc=0.3909, theta=[0.119, 0.119, 0.119], beta1=0.120, beta2=0.121, alpha=0.100)
+[AsyncEval] agg=120 test_loss=1.6301 test_acc=0.3909 (avg_train_loss=1.6449, avg_train_acc=0.3860)
+[Server] Aggregated 2 updates -> agg=122 (avg_tau=3.500, test_loss=1.6301, test_acc=0.3909, theta=[0.120, 0.120, 0.120], beta1=0.121, beta2=0.122, alpha=0.100)
+[Progress] Aggregation 122/200 | Time: 28.5 min
+[Server] Aggregated 1 updates -> agg=123 (avg_tau=3.000, test_loss=1.6301, test_acc=0.3909, theta=[0.121, 0.121, 0.121], beta1=0.122, beta2=0.123, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=124 (avg_tau=4.000, test_loss=1.6301, test_acc=0.3909, theta=[0.122, 0.122, 0.122], beta1=0.123, beta2=0.124, alpha=0.100)
+[Progress] Aggregation 125/200 | Time: 29.0 min
+[Server] Aggregated 1 updates -> agg=125 (avg_tau=4.000, test_loss=1.6199, test_acc=0.3932, theta=[0.123, 0.123, 0.123], beta1=0.124, beta2=0.125, alpha=0.100)
+[AsyncEval] agg=125 test_loss=1.6199 test_acc=0.3932 (avg_train_loss=1.6995, avg_train_acc=0.3613)
+[Server] Aggregated 2 updates -> agg=126 (avg_tau=3.500, test_loss=1.6199, test_acc=0.3932, theta=[0.124, 0.124, 0.124], beta1=0.125, beta2=0.126, alpha=0.100)
+[Progress] Aggregation 126/200 | Time: 29.5 min
+[Server] Aggregated 1 updates -> agg=127 (avg_tau=3.000, test_loss=1.6199, test_acc=0.3932, theta=[0.125, 0.125, 0.125], beta1=0.126, beta2=0.127, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=128 (avg_tau=3.500, test_loss=1.6199, test_acc=0.3932, theta=[0.126, 0.126, 0.126], beta1=0.127, beta2=0.128, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=129 (avg_tau=3.000, test_loss=1.6199, test_acc=0.3932, theta=[0.127, 0.127, 0.127], beta1=0.128, beta2=0.129, alpha=0.100)
+[Progress] Aggregation 129/200 | Time: 30.0 min
+[Server] Aggregated 2 updates -> agg=130 (avg_tau=3.500, test_loss=1.6075, test_acc=0.4002, theta=[0.128, 0.128, 0.128], beta1=0.129, beta2=0.130, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=131 (avg_tau=3.000, test_loss=1.6075, test_acc=0.4002, theta=[0.129, 0.129, 0.129], beta1=0.130, beta2=0.131, alpha=0.100)
+[AsyncEval] agg=130 test_loss=1.6075 test_acc=0.4002 (avg_train_loss=1.6735, avg_train_acc=0.3712)
+[Progress] Aggregation 131/200 | Time: 30.5 min
+[Server] Aggregated 1 updates -> agg=132 (avg_tau=4.000, test_loss=1.6075, test_acc=0.4002, theta=[0.130, 0.130, 0.130], beta1=0.131, beta2=0.132, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=133 (avg_tau=3.500, test_loss=1.6075, test_acc=0.4002, theta=[0.131, 0.131, 0.131], beta1=0.132, beta2=0.133, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=134 (avg_tau=3.000, test_loss=1.6075, test_acc=0.4002, theta=[0.132, 0.132, 0.132], beta1=0.133, beta2=0.134, alpha=0.100)
+[Progress] Aggregation 134/200 | Time: 31.0 min
+[Server] Aggregated 2 updates -> agg=135 (avg_tau=3.500, test_loss=1.5987, test_acc=0.4034, theta=[0.133, 0.133, 0.133], beta1=0.134, beta2=0.135, alpha=0.100)
+[Progress] Aggregation 135/200 | Time: 31.5 min
+[Server] Aggregated 1 updates -> agg=136 (avg_tau=3.000, test_loss=1.5987, test_acc=0.4034, theta=[0.134, 0.134, 0.134], beta1=0.135, beta2=0.136, alpha=0.100)
+[AsyncEval] agg=135 test_loss=1.5987 test_acc=0.4034 (avg_train_loss=1.6882, avg_train_acc=0.3794)
+[Server] Aggregated 1 updates -> agg=137 (avg_tau=4.000, test_loss=1.5987, test_acc=0.4034, theta=[0.135, 0.135, 0.135], beta1=0.136, beta2=0.137, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=138 (avg_tau=3.500, test_loss=1.5987, test_acc=0.4034, theta=[0.136, 0.136, 0.136], beta1=0.137, beta2=0.138, alpha=0.100)
+[Progress] Aggregation 138/200 | Time: 32.0 min
+[Server] Aggregated 1 updates -> agg=139 (avg_tau=3.000, test_loss=1.5987, test_acc=0.4034, theta=[0.137, 0.137, 0.137], beta1=0.138, beta2=0.139, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=140 (avg_tau=3.500, test_loss=1.5898, test_acc=0.4066, theta=[0.138, 0.138, 0.138], beta1=0.139, beta2=0.140, alpha=0.100)
+[Progress] Aggregation 140/200 | Time: 32.5 min
+[Server] Aggregated 1 updates -> agg=141 (avg_tau=3.000, test_loss=1.5898, test_acc=0.4066, theta=[0.139, 0.139, 0.139], beta1=0.140, beta2=0.141, alpha=0.100)
+[AsyncEval] agg=140 test_loss=1.5898 test_acc=0.4066 (avg_train_loss=1.6053, avg_train_acc=0.3973)
+[Server] Aggregated 1 updates -> agg=142 (avg_tau=4.000, test_loss=1.5898, test_acc=0.4066, theta=[0.140, 0.140, 0.140], beta1=0.141, beta2=0.142, alpha=0.100)
+[Progress] Aggregation 142/200 | Time: 33.0 min
+[Server] Aggregated 2 updates -> agg=143 (avg_tau=3.500, test_loss=1.5898, test_acc=0.4066, theta=[0.141, 0.141, 0.141], beta1=0.142, beta2=0.143, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=144 (avg_tau=3.000, test_loss=1.5898, test_acc=0.4066, theta=[0.142, 0.142, 0.142], beta1=0.143, beta2=0.144, alpha=0.100)
+[Progress] Aggregation 145/200 | Time: 33.5 min
+[Server] Aggregated 2 updates -> agg=145 (avg_tau=3.500, test_loss=1.5762, test_acc=0.4120, theta=[0.143, 0.143, 0.143], beta1=0.144, beta2=0.145, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=146 (avg_tau=3.000, test_loss=1.5762, test_acc=0.4120, theta=[0.144, 0.144, 0.144], beta1=0.145, beta2=0.146, alpha=0.100)
+[AsyncEval] agg=145 test_loss=1.5762 test_acc=0.4120 (avg_train_loss=1.6442, avg_train_acc=0.3785)
+[Server] Aggregated 2 updates -> agg=147 (avg_tau=3.500, test_loss=1.5762, test_acc=0.4120, theta=[0.145, 0.145, 0.145], beta1=0.146, beta2=0.147, alpha=0.100)
+[Progress] Aggregation 147/200 | Time: 34.0 min
+[Server] Aggregated 1 updates -> agg=148 (avg_tau=3.000, test_loss=1.5762, test_acc=0.4120, theta=[0.146, 0.146, 0.146], beta1=0.147, beta2=0.148, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=149 (avg_tau=3.000, test_loss=1.5762, test_acc=0.4120, theta=[0.147, 0.147, 0.147], beta1=0.148, beta2=0.149, alpha=0.100)
+[Progress] Aggregation 150/200 | Time: 34.5 min
+[Server] Aggregated 1 updates -> agg=150 (avg_tau=4.000, test_loss=1.5754, test_acc=0.4110, theta=[0.148, 0.148, 0.148], beta1=0.149, beta2=0.150, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=151 (avg_tau=4.000, test_loss=1.5754, test_acc=0.4110, theta=[0.149, 0.149, 0.149], beta1=0.150, beta2=0.151, alpha=0.100)
+[AsyncEval] agg=150 test_loss=1.5754 test_acc=0.4110 (avg_train_loss=1.6187, avg_train_acc=0.3824)
+[Server] Aggregated 1 updates -> agg=152 (avg_tau=4.000, test_loss=1.5754, test_acc=0.4110, theta=[0.150, 0.150, 0.150], beta1=0.151, beta2=0.152, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=153 (avg_tau=4.000, test_loss=1.5754, test_acc=0.4110, theta=[0.151, 0.151, 0.151], beta1=0.152, beta2=0.153, alpha=0.100)
+[Progress] Aggregation 153/200 | Time: 35.0 min
+[Server] Aggregated 1 updates -> agg=154 (avg_tau=4.000, test_loss=1.5754, test_acc=0.4110, theta=[0.152, 0.152, 0.152], beta1=0.153, beta2=0.154, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=155 (avg_tau=4.000, test_loss=1.5682, test_acc=0.4112, theta=[0.153, 0.153, 0.153], beta1=0.154, beta2=0.155, alpha=0.100)
+[Progress] Aggregation 155/200 | Time: 35.5 min
+[Server] Aggregated 1 updates -> agg=156 (avg_tau=4.000, test_loss=1.5682, test_acc=0.4112, theta=[0.154, 0.154, 0.154], beta1=0.155, beta2=0.156, alpha=0.100)
+[AsyncEval] agg=155 test_loss=1.5682 test_acc=0.4112 (avg_train_loss=1.5982, avg_train_acc=0.3867)
+[Server] Aggregated 1 updates -> agg=157 (avg_tau=4.000, test_loss=1.5682, test_acc=0.4112, theta=[0.153, 0.153, 0.153], beta1=0.156, beta2=0.157, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=158 (avg_tau=4.000, test_loss=1.5682, test_acc=0.4112, theta=[0.152, 0.152, 0.152], beta1=0.157, beta2=0.158, alpha=0.100)
+[Progress] Aggregation 158/200 | Time: 36.0 min
+[Server] Aggregated 1 updates -> agg=159 (avg_tau=4.000, test_loss=1.5682, test_acc=0.4112, theta=[0.151, 0.151, 0.151], beta1=0.158, beta2=0.159, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=160 (avg_tau=4.000, test_loss=1.5477, test_acc=0.4197, theta=[0.152, 0.152, 0.152], beta1=0.159, beta2=0.160, alpha=0.100)
+[Progress] Aggregation 160/200 | Time: 36.5 min
+[Server] Aggregated 1 updates -> agg=161 (avg_tau=4.000, test_loss=1.5477, test_acc=0.4197, theta=[0.153, 0.153, 0.153], beta1=0.160, beta2=0.161, alpha=0.100)
+[AsyncEval] agg=160 test_loss=1.5477 test_acc=0.4197 (avg_train_loss=2.0830, avg_train_acc=0.2614)
+[Server] Aggregated 1 updates -> agg=162 (avg_tau=4.000, test_loss=1.5477, test_acc=0.4197, theta=[0.154, 0.154, 0.154], beta1=0.161, beta2=0.162, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=163 (avg_tau=3.500, test_loss=1.5477, test_acc=0.4197, theta=[0.155, 0.155, 0.155], beta1=0.162, beta2=0.163, alpha=0.100)
+[Progress] Aggregation 163/200 | Time: 37.0 min
+[Server] Aggregated 1 updates -> agg=164 (avg_tau=3.000, test_loss=1.5477, test_acc=0.4197, theta=[0.156, 0.156, 0.156], beta1=0.163, beta2=0.164, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=165 (avg_tau=4.000, test_loss=1.5279, test_acc=0.4272, theta=[0.157, 0.157, 0.157], beta1=0.164, beta2=0.165, alpha=0.100)
+[Progress] Aggregation 165/200 | Time: 37.5 min
+[Server] Aggregated 2 updates -> agg=166 (avg_tau=3.500, test_loss=1.5279, test_acc=0.4272, theta=[0.158, 0.158, 0.158], beta1=0.165, beta2=0.166, alpha=0.100)
+[AsyncEval] agg=165 test_loss=1.5279 test_acc=0.4272 (avg_train_loss=1.6979, avg_train_acc=0.3763)
+[Server] Aggregated 1 updates -> agg=167 (avg_tau=3.000, test_loss=1.5279, test_acc=0.4272, theta=[0.159, 0.159, 0.159], beta1=0.166, beta2=0.167, alpha=0.100)
+[Progress] Aggregation 167/200 | Time: 38.0 min
+[Server] Aggregated 2 updates -> agg=168 (avg_tau=3.500, test_loss=1.5279, test_acc=0.4272, theta=[0.160, 0.160, 0.160], beta1=0.167, beta2=0.168, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=169 (avg_tau=3.000, test_loss=1.5279, test_acc=0.4272, theta=[0.161, 0.161, 0.161], beta1=0.168, beta2=0.169, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=170 (avg_tau=4.000, test_loss=1.5221, test_acc=0.4284, theta=[0.162, 0.162, 0.162], beta1=0.169, beta2=0.170, alpha=0.100)
+[Progress] Aggregation 170/200 | Time: 38.5 min
+[Server] Aggregated 1 updates -> agg=171 (avg_tau=4.000, test_loss=1.5221, test_acc=0.4284, theta=[0.163, 0.163, 0.163], beta1=0.170, beta2=0.171, alpha=0.100)
+[AsyncEval] agg=170 test_loss=1.5221 test_acc=0.4284 (avg_train_loss=1.7863, avg_train_acc=0.3654)
+[Server] Aggregated 1 updates -> agg=172 (avg_tau=4.000, test_loss=1.5221, test_acc=0.4284, theta=[0.164, 0.164, 0.164], beta1=0.171, beta2=0.172, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=173 (avg_tau=4.000, test_loss=1.5221, test_acc=0.4284, theta=[0.165, 0.165, 0.165], beta1=0.172, beta2=0.173, alpha=0.100)
+[Progress] Aggregation 173/200 | Time: 39.0 min
+[Server] Aggregated 1 updates -> agg=174 (avg_tau=4.000, test_loss=1.5221, test_acc=0.4284, theta=[0.166, 0.166, 0.166], beta1=0.173, beta2=0.174, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=175 (avg_tau=4.000, test_loss=1.5262, test_acc=0.4284, theta=[0.167, 0.167, 0.167], beta1=0.174, beta2=0.175, alpha=0.100)
+[Progress] Aggregation 175/200 | Time: 39.5 min
+[AsyncEval] agg=175 test_loss=1.5262 test_acc=0.4284 (avg_train_loss=1.6485, avg_train_acc=0.3666)
+[Server] Aggregated 1 updates -> agg=176 (avg_tau=4.000, test_loss=1.5262, test_acc=0.4284, theta=[0.168, 0.168, 0.168], beta1=0.175, beta2=0.176, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=177 (avg_tau=4.000, test_loss=1.5262, test_acc=0.4284, theta=[0.169, 0.169, 0.169], beta1=0.176, beta2=0.177, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=178 (avg_tau=3.500, test_loss=1.5262, test_acc=0.4284, theta=[0.168, 0.168, 0.168], beta1=0.177, beta2=0.178, alpha=0.100)
+[Progress] Aggregation 178/200 | Time: 40.0 min
+[Server] Aggregated 1 updates -> agg=179 (avg_tau=3.000, test_loss=1.5262, test_acc=0.4284, theta=[0.167, 0.167, 0.167], beta1=0.178, beta2=0.179, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=180 (avg_tau=4.000, test_loss=1.5263, test_acc=0.4293, theta=[0.166, 0.166, 0.166], beta1=0.179, beta2=0.180, alpha=0.100)
+[Progress] Aggregation 180/200 | Time: 40.5 min
+[Server] Aggregated 1 updates -> agg=181 (avg_tau=4.000, test_loss=1.5263, test_acc=0.4293, theta=[0.165, 0.165, 0.165], beta1=0.180, beta2=0.181, alpha=0.100)
+[AsyncEval] agg=180 test_loss=1.5263 test_acc=0.4293 (avg_train_loss=1.5871, avg_train_acc=0.4072)
+[Server] Aggregated 1 updates -> agg=182 (avg_tau=4.000, test_loss=1.5263, test_acc=0.4293, theta=[0.166, 0.166, 0.166], beta1=0.181, beta2=0.182, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=183 (avg_tau=4.000, test_loss=1.5263, test_acc=0.4293, theta=[0.167, 0.167, 0.167], beta1=0.182, beta2=0.183, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=184 (avg_tau=4.000, test_loss=1.5263, test_acc=0.4293, theta=[0.166, 0.166, 0.166], beta1=0.183, beta2=0.184, alpha=0.100)
+[Progress] Aggregation 184/200 | Time: 41.0 min
+[Server] Aggregated 1 updates -> agg=185 (avg_tau=4.000, test_loss=1.5199, test_acc=0.4301, theta=[0.165, 0.165, 0.165], beta1=0.184, beta2=0.185, alpha=0.100)
+[Progress] Aggregation 185/200 | Time: 41.5 min
+[AsyncEval] agg=185 test_loss=1.5199 test_acc=0.4301 (avg_train_loss=1.5372, avg_train_acc=0.4312)
+[Server] Aggregated 1 updates -> agg=186 (avg_tau=4.000, test_loss=1.5199, test_acc=0.4301, theta=[0.166, 0.166, 0.166], beta1=0.185, beta2=0.186, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=187 (avg_tau=4.000, test_loss=1.5199, test_acc=0.4301, theta=[0.167, 0.167, 0.167], beta1=0.186, beta2=0.187, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=188 (avg_tau=3.500, test_loss=1.5199, test_acc=0.4301, theta=[0.168, 0.168, 0.168], beta1=0.187, beta2=0.188, alpha=0.100)
+[Progress] Aggregation 188/200 | Time: 42.0 min
+[Server] Aggregated 1 updates -> agg=189 (avg_tau=3.000, test_loss=1.5199, test_acc=0.4301, theta=[0.169, 0.169, 0.169], beta1=0.188, beta2=0.189, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=190 (avg_tau=3.500, test_loss=1.5202, test_acc=0.4326, theta=[0.170, 0.170, 0.170], beta1=0.189, beta2=0.190, alpha=0.100)
+[Progress] Aggregation 190/200 | Time: 42.5 min
+[AsyncEval] agg=190 test_loss=1.5202 test_acc=0.4326 (avg_train_loss=1.6317, avg_train_acc=0.3938)
+[Server] Aggregated 1 updates -> agg=191 (avg_tau=3.000, test_loss=1.5202, test_acc=0.4326, theta=[0.171, 0.171, 0.171], beta1=0.190, beta2=0.191, alpha=0.100)
+[Server] Aggregated 2 updates -> agg=192 (avg_tau=3.500, test_loss=1.5202, test_acc=0.4326, theta=[0.172, 0.172, 0.172], beta1=0.191, beta2=0.192, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=193 (avg_tau=3.000, test_loss=1.5202, test_acc=0.4326, theta=[0.173, 0.173, 0.173], beta1=0.192, beta2=0.193, alpha=0.100)
+[Progress] Aggregation 193/200 | Time: 43.0 min
+[Server] Aggregated 1 updates -> agg=194 (avg_tau=3.000, test_loss=1.5202, test_acc=0.4326, theta=[0.174, 0.174, 0.174], beta1=0.193, beta2=0.194, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=195 (avg_tau=4.000, test_loss=1.5102, test_acc=0.4347, theta=[0.175, 0.175, 0.175], beta1=0.194, beta2=0.195, alpha=0.100)
+[Progress] Aggregation 195/200 | Time: 43.5 min
+[Server] Aggregated 1 updates -> agg=196 (avg_tau=4.000, test_loss=1.5102, test_acc=0.4347, theta=[0.176, 0.176, 0.176], beta1=0.195, beta2=0.196, alpha=0.100)
+[AsyncEval] agg=195 test_loss=1.5102 test_acc=0.4347 (avg_train_loss=1.6016, avg_train_acc=0.4020)
+[Server] Aggregated 2 updates -> agg=197 (avg_tau=3.500, test_loss=1.5102, test_acc=0.4347, theta=[0.177, 0.177, 0.177], beta1=0.196, beta2=0.197, alpha=0.100)
+[Progress] Aggregation 197/200 | Time: 44.0 min
+[Server] Aggregated 2 updates -> agg=198 (avg_tau=3.000, test_loss=1.5102, test_acc=0.4347, theta=[0.178, 0.178, 0.178], beta1=0.197, beta2=0.198, alpha=0.100)
+[Server] Aggregated 1 updates -> agg=199 (avg_tau=3.000, test_loss=1.5102, test_acc=0.4347, theta=[0.179, 0.179, 0.179], beta1=0.198, beta2=0.199, alpha=0.100)
+[Progress] Aggregation 200/200 | Time: 44.5 min
+[Server] Aggregated 2 updates -> agg=200 (avg_tau=3.500, test_loss=1.4970, test_acc=0.4417, theta=[0.180, 0.180, 0.180], beta1=0.199, beta2=0.200, alpha=0.100)
+[Server] Stopping: max aggregation rounds reached
+[AsyncEval] agg=200 test_loss=1.4970 test_acc=0.4417 (avg_train_loss=1.5378, avg_train_acc=0.4366)
+[Server] Aggregated 1 updates -> agg=201 (avg_tau=3.000, test_loss=1.4970, test_acc=0.4417, theta=[0.181, 0.181, 0.181], beta1=0.200, beta2=0.201, alpha=0.100)
+[Server] Aggregated 3 updates -> agg=202 (avg_tau=3.000, test_loss=1.4970, test_acc=0.4417, theta=[0.182, 0.182, 0.182], beta1=0.201, beta2=0.202, alpha=0.100)
+[Progress] Aggregation 202/200 | Time: 45.0 min
+[Server] Aggregated 1 updates -> agg=203 (avg_tau=2.000, test_loss=1.4970, test_acc=0.4417, theta=[0.183, 0.183, 0.183], beta1=0.202, beta2=0.203, alpha=0.100)
+
+================================================================================
+200-AGGREGATION TEST RESULTS
+================================================================================
+
+⏱️  Total Time: 2703.48s (45.1 minutes, 0.75 hours)
+🔄 Total Aggregations: 203
+
+📊 Client Participation:
+   Total updates: 282
+   Average staleness: 3.301
+   Max staleness: 4.0
+   Min staleness: 0.0
+
+✅ Results saved to:
+   • /Users/avinashashokar/Documents/college/dml/project/fedasync-staleness/future_works/logs/run_200agg_20251210_100916/Eval.csv
+   • /Users/avinashashokar/Documents/college/dml/project/fedasync-staleness/future_works/logs/run_200agg_20251210_100916/Participation.csv
+   • /Users/avinashashokar/Documents/college/dml/project/fedasync-staleness/future_works/logs/run_200agg_20251210_100916/SUMMARY.txt
+
+📁 All results versioned in: /Users/avinashashokar/Documents/college/dml/project/fedasync-staleness/future_works/logs/run_200agg_20251210_100916
+
+================================================================================
+✅ 200-aggregation test complete!
+================================================================================
