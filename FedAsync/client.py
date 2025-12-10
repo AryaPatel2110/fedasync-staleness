@@ -1,3 +1,4 @@
+# Lightning-based local client, resumable checkpoints, no Flower deps
 import time
 from typing import List, Tuple, Optional
 
@@ -5,11 +6,14 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
+from contextlib import redirect_stdout, redirect_stderr
+import io
+
 import pytorch_lightning as pl
-import random
 
 from utils.model import build_resnet18, state_to_list, list_to_state
 from utils.helper import get_device
+import random
 
 
 def _device_to_accelerator(device: torch.device) -> str:
@@ -25,7 +29,10 @@ def _testloader(root: str, batch_size: int = 256):
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
     ])
-    ds = datasets.CIFAR10(root=root, train=False, download=True, transform=tfm)
+    buf = io.StringIO()
+    # Silence torchvision download/cache prints
+    with redirect_stdout(buf), redirect_stderr(buf):
+        ds = datasets.CIFAR10(root=root, train=False, download=True, transform=tfm)
     return DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=2)
 
 
@@ -46,14 +53,11 @@ def _evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> Tup
 
 
 class LitCifar(pl.LightningModule):
-    def __init__(self, base_model: nn.Module, lr: float = 1e-3, momentum: float = 0.9, weight_decay: float = 5e-4):
+    def __init__(self, base_model: nn.Module, lr: float = 1e-3):
         super().__init__()
         self.save_hyperparameters(ignore=["base_model"])
         self.model = base_model
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
-        self._optimizer_lr = lr
-        self._optimizer_momentum = momentum
-        self._optimizer_weight_decay = weight_decay
+        self.criterion = nn.CrossEntropyLoss()
         self._train_loss_sum = 0.0
         self._train_correct = 0
         self._train_total = 0
@@ -82,24 +86,20 @@ class LitCifar(pl.LightningModule):
         return self._train_loss_sum / self._train_total, self._train_correct / self._train_total
 
     def configure_optimizers(self):
-        return torch.optim.SGD(
-            self.parameters(),
-            lr=self._optimizer_lr,
-            momentum=self._optimizer_momentum,
-            weight_decay=self._optimizer_weight_decay
-        )
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
 
 
 class LocalAsyncClient:
+    """Pull global -> Lightning local fit -> push update with averaged metrics.
+       Supports per-client slow/fast delays with optional per-round jitter."""
     def __init__(
         self,
         cid: int,
         cfg: dict,
         subset: Subset,
-        work_dir: str = "./checkpoints/clients",
         base_delay: float = 0.0,
         slow: bool = False,
-        delay_ranges: Optional[tuple] = None,
+        delay_ranges: Optional[tuple] = None,   # ((a_s, b_s), (a_f, b_f))
         jitter: float = 0.0,
         fix_delay: bool = True,
     ):
@@ -108,20 +108,29 @@ class LocalAsyncClient:
         self.device = get_device()
 
         base = build_resnet18(num_classes=cfg["data"]["num_classes"], pretrained=False)
-        lr = float(cfg["clients"]["lr"])
-        momentum = float(cfg["clients"].get("momentum", 0.9))
-        weight_decay = float(cfg["clients"].get("weight_decay", 5e-4))
-        self.lit = LitCifar(base, lr=lr, momentum=momentum, weight_decay=weight_decay)
+        self.lit = LitCifar(base, lr=float(cfg["clients"]["lr"]))
 
-        self.loader = DataLoader(subset, batch_size=int(cfg["clients"]["batch_size"]),
+        # Rebuild a training subset with CIFAR-style augmentation (keeps partition indices, avoids touching partitioner)
+        indices = subset.indices if hasattr(subset, "indices") else list(range(len(subset)))
+        train_tfm = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
+        ])
+        train_ds = datasets.CIFAR10(cfg["data"]["data_dir"], train=True, download=False, transform=train_tfm)
+        aug_subset = Subset(train_ds, indices)
+        self.loader = DataLoader(aug_subset, batch_size=int(cfg["clients"]["batch_size"]),
                                  shuffle=True, num_workers=0)
 
+        # delay controls
         self.base_delay = float(base_delay)
         self.slow = bool(slow)
         self.delay_ranges = delay_ranges
         self.jitter = float(jitter)
         self.fix_delay = bool(fix_delay)
 
+        # pre-sample fixed delay if requested
         if self.fix_delay and self.delay_ranges is not None:
             (a_s, b_s), (a_f, b_f) = self.delay_ranges
             if self.slow:
@@ -130,6 +139,8 @@ class LocalAsyncClient:
                 self.base_delay = random.uniform(float(a_f), float(b_f))
 
         self.accelerator = _device_to_accelerator(self.device)
+
+        # local test loader to compute per-client test metrics
         self.testloader = _testloader(cfg["data"]["data_dir"])
 
     def _to_list(self) -> List[torch.Tensor]:
@@ -142,9 +153,13 @@ class LocalAsyncClient:
         self.lit.to(self.device)
 
     def _sleep_delay(self):
+        # global delay from config (kept for backward compat)
         global_d = float(self.cfg.get("server_runtime", {}).get("client_delay", 0.0))
+
+        # per-client base delay
         base = self.base_delay
 
+        # if not fixed, resample each fit
         if not self.fix_delay and self.delay_ranges is not None:
             (a_s, b_s), (a_f, b_f) = self.delay_ranges
             if self.slow:
@@ -152,18 +167,23 @@ class LocalAsyncClient:
             else:
                 base = random.uniform(float(a_f), float(b_f))
 
+        # add +/- jitter
         jit = random.uniform(-self.jitter, self.jitter) if self.jitter > 0.0 else 0.0
+
         delay = max(0.0, global_d + base + jit)
         if delay > 0.0:
             time.sleep(delay)
 
     def fit_once(self, server) -> bool:
+        # pull global
         params, version = server.get_global()
         self._from_list(params)
+
+        # emulate heterogeneous device speed
         self._sleep_delay()
 
+        # train for local_epochs; checkpoints disabled for async runs
         epochs = int(self.cfg["clients"]["local_epochs"])
-        grad_clip = float(self.cfg["clients"].get("grad_clip", 1.0))
         trainer = pl.Trainer(
             max_epochs=epochs,
             accelerator=self.accelerator,
@@ -174,13 +194,13 @@ class LocalAsyncClient:
             num_sanity_val_steps=0,
             enable_progress_bar=False,
             callbacks=[],
-            gradient_clip_val=grad_clip,
-            gradient_clip_algorithm="norm",
         )
         start = time.time()
+        # ckpt = self.ckpt_path if Path(self.ckpt_path).exists() else None
         trainer.fit(self.lit, train_dataloaders=self.loader)
         duration = time.time() - start
 
+        # local metrics
         train_loss, train_acc = self.lit.get_epoch_metrics()
         test_loss, test_acc = _evaluate(self.lit.model, self.testloader, self.device)
 

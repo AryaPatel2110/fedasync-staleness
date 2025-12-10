@@ -1,136 +1,109 @@
-import os
+# Orchestrator: partitions data, starts server, runs async clients
 import logging
-import warnings
-os.environ["TQDM_DISABLE"] = "1"
-os.environ["PYTHONWARNINGS"] = "ignore"
-os.environ["LIGHTNING_DISABLE_RICH"] = "1"
-for name in [
-    "pytorch_lightning", "lightning", "lightning.pytorch",
-    "lightning_fabric", "lightning_utilities", "torch", "torchvision",
-]:
-    logging.getLogger(name).setLevel(logging.ERROR)
-    logging.getLogger(name).propagate = False
-logging.getLogger().setLevel(logging.WARNING)
-warnings.filterwarnings("ignore")
-
-import threading
-import time
-from typing import Dict, Any, List
 import random
-from datetime import datetime
-from pathlib import Path
-import subprocess
-import shutil
+from typing import List
 
-import yaml
+from concurrent.futures import ThreadPoolExecutor
 
+import numpy as np
+import torch
+from torchvision import datasets, transforms
+
+from .config import load_config
 from .client import AsyncClient
 from .server import AsyncServer
-from utils.model import build_resnet18
-from utils.partitioning import DataDistributor
-from utils.helper import set_seed, get_device
+from utils.partitioning import DataDistributor  # <-- NEW: use external partitioner
+from utils.helper import get_device 
 
 
-CFG_PATH = os.environ.get("TRUSTWEIGHT_CONFIG", os.path.join(os.path.dirname(__file__), "config.yaml"))
-
-
-def load_cfg(path: str) -> Dict[str, Any]:
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
-
-
-def main():
-    cfg = load_cfg(CFG_PATH)
-
-    seed = int(cfg.get("seed", 42))
-    set_seed(seed)
+def _set_seed(seed: int) -> None:
+    """Set seeds for reproducibility."""
     random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
-    run_dir = Path("logs") / "avinash" / f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    run_dir.mkdir(parents=True, exist_ok=True)
-    
-    try:
-        commit_hash = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
-    except:
-        commit_hash = "unknown"
-    
-    csv_header = "total_agg,avg_train_loss,avg_train_acc,test_loss,test_acc,time"
-    with (run_dir / "COMMIT.txt").open("w") as f:
-        f.write(f"{commit_hash},{csv_header}\n")
-    
-    shutil.copy(CFG_PATH, run_dir / "CONFIG.yaml")
 
-    dd = DataDistributor(dataset_name=cfg["data"]["dataset"], data_dir=cfg["data"]["data_dir"])
-    dd.distribute_data(
-        num_clients=int(cfg["clients"]["total"]),
-        alpha=float(cfg.get("partition_alpha", 0.5)),
-        seed=seed,
+def _build_train_dataset(data_dir: str) -> datasets.CIFAR10:
+    """(Kept for compatibility; no longer used for partitioning.)"""
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(
+                (0.4914, 0.4822, 0.4465),
+                (0.2470, 0.2435, 0.2616),
+            ),
+        ]
+    )
+    ds = datasets.CIFAR10(root=data_dir, train=True, download=True, transform=transform)
+    return ds
+
+
+def main() -> None:
+    print(f"Using device: {get_device()}")
+    logging.basicConfig(level=logging.INFO)
+
+    # --------------------- load config & seed ---------------------
+    cfg = load_config()
+    _set_seed(cfg.seed)
+
+    # --------------------- dataset & partition --------------------
+    # Use DataDistributor as the ONLY mechanism to distribute data.
+    # This respects the partitioning behavior defined in utils.partitioning.
+    distributor = DataDistributor(
+        dataset_name=cfg.data.dataset,   # e.g. "cifar10"
+        data_dir=cfg.data.data_dir,
+    )
+    distributor.distribute_data(
+        num_clients=cfg.clients.total,
+        alpha=cfg.partition_alpha,
+        seed=cfg.seed,
     )
 
-    global_model = build_resnet18(num_classes=cfg["data"]["num_classes"], pretrained=False)
-    server = AsyncServer(
-        global_model=global_model,
-        total_train_samples=len(dd.train_dataset),
-        buffer_size=int(cfg["trustweight"]["buffer_size"]),
-        buffer_timeout_s=float(cfg["trustweight"]["buffer_timeout_s"]),
-        use_sample_weighing=bool(cfg["trustweight"]["use_sample_weighing"]),
-        target_accuracy=float(cfg["eval"]["target_accuracy"]),
-        max_rounds=int(cfg["train"]["max_rounds"]) if "max_rounds" in cfg["train"] else None,
-        eval_interval_s=int(cfg["eval"]["interval_seconds"]),
-        data_dir=cfg["data"]["data_dir"],
-        checkpoints_dir=str(run_dir / "checkpoints"),
-        logs_dir=str(run_dir),
-        global_log_csv=str(run_dir / "TrustWeight.csv"),
-        client_participation_csv=str(run_dir / "TrustWeightClientParticipation.csv"),
-        final_model_path=str(run_dir / "TrustWeightModel.pt"),
-        resume=False,
-        device=get_device(),
-        eta=float(cfg["trustweight"].get("eta", 0.5)),
-        theta=tuple(cfg["trustweight"].get("theta", [1.0, -0.1, 0.2])),
-        freshness_alpha=float(cfg["trustweight"].get("freshness_alpha", 0.1)),
-        beta1=float(cfg["trustweight"].get("beta1", 0.0)),
-        beta2=float(cfg["trustweight"].get("beta2", 0.0)),
-        momentum_gamma=float(cfg["trustweight"].get("momentum_gamma", 0.9)),
-        update_clip_norm=float(cfg["train"].get("update_clip_norm", 5.0)),
-    )
+    # Convert the dict {client_id: [indices]} into the list-of-lists expected below
+    partitions = [
+        distributor.partitions[cid] for cid in range(cfg.clients.total)
+    ]
 
-    n = int(cfg["clients"]["total"])
+    # --------------------- create server -------------------------
+    # AsyncServer encapsulates the trust-weighted async aggregation logic + logging.
+    server = AsyncServer(cfg=cfg)
+
+    # --------------------- create clients ------------------------
     clients: List[AsyncClient] = []
-    for cid in range(n):
-        indices = dd.partitions[cid] if cid in dd.partitions else []
-        clients.append(
-            AsyncClient(
-                cid=cid,
-                indices=indices,
-                cfg=cfg,
-            )
+    for cid in range(cfg.clients.total):
+        indices = partitions[cid] if cid < len(partitions) else []
+        client = AsyncClient(
+            cid=cid,
+            indices=indices,
+            cfg=cfg,
         )
-
-    sem = threading.Semaphore(int(cfg["clients"]["concurrent"]))
+        clients.append(client)
 
     def client_loop(cl: AsyncClient) -> None:
+        """Loop for a single client: fetch global, train, send update, repeat."""
         while not server.should_stop():
-            with sem:
-                cont = cl.run_once(server)
+            cont = cl.run_once(server)
             if not cont or server.should_stop():
                 break
-            time.sleep(0.05)
 
-    threads: List[threading.Thread] = []
-    for cl in clients:
-        t = threading.Thread(target=client_loop, args=(cl,), daemon=True)
-        t.start()
-        threads.append(t)
+    # --------------------- start client threads via executor ------------------
+    # Pool size enforces the concurrent-client limit.
+    with ThreadPoolExecutor(max_workers=cfg.clients.concurrent) as executor:
+        futures = [executor.submit(client_loop, cl) for cl in clients]
 
-    print(f"[TrustWeight] Started {len(threads)} client threads")
-    print(f"[TrustWeight] Running for up to {cfg['train']['max_rounds']} rounds...")
-    print(f"[TrustWeight] Results: {run_dir}")
+        # --------------------- wait for completion -------------------
+        # Server decides when to stop (based on target accuracy / max rounds).
+        server.wait()
 
-    server.wait()
-    for t in threads:
-        t.join()
-
-    print(f"[TrustWeight] Training completed. Results saved to: {run_dir}")
+        # Ensure all client loops exit before shutting down.
+        for f in futures:
+            try:
+                f.result(timeout=1.0)
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

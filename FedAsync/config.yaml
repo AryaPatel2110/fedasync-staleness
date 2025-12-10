@@ -1,61 +1,54 @@
-# ============================================
-#  IID (alpha = 1000) EXPERIMENT CONFIG
-# ============================================
-
+# ---- Data ----
 data:
-  dataset: "cifar10"
-  data_dir: "./data"
+  dataset: cifar10
+  data_dir: ./data
   num_classes: 10
 
+# ---- Clients ----
 clients:
-  total: 20             # same as your plan
-  concurrent: 5         # stable and realistic
-  local_epochs: 1       # IMPORTANT: keeps fairness for async FL
+  total: 20
+  concurrent: 10
+  local_epochs: 2
   batch_size: 128
-  lr: 0.005             # tuned for stability in FL with 1 epoch
-  momentum: 0.9
-  weight_decay: 0.001
-  grad_clip: 5.0
+  lr: 0.005
 
-  # No stragglers for IID experiment
-  struggle_percent: 0
-  delay_slow_range: [0.0, 0.0]
-  delay_fast_range: [0.0, 0.0]
-  jitter_per_round: 0.0
-  fix_delays_per_client: true
+  # --- heterogeneity controls ---
+  struggle_percent: 0          # % of all clients that are slow
+  delay_slow_range: [0.8, 2.0]  # seconds, Uniform[a, b] for slow clients
+  delay_fast_range: [0.0, 0.2]  # seconds, Uniform[a, b] for fast/normal clients
+  jitter_per_round: 0.1         # extra +/- seconds each local fit; 0 disables
+  fix_delays_per_client: true   # true: sample once per client; false: resample every fit
 
-# FedAsync parameters
+# ---- Async FedAsync ----
 async:
-  c: 0.5
-  fedasync_mixing_alpha: 1.0  # Increased from 0.5 for proper learning
-  use_sample_weighing: true
+  alpha: 0.6
 
-# FedBuff parameters (FedAsync ignores these if not used)
-buff:
-  buffer_size: 5
-  buffer_timeout_s: 0.0
-  use_sample_weighing: true
-  eta: 0.5             # you already tuned this and it's good
-
+# ---- Evaluation / stopping ----
 eval:
-  interval_seconds: 0.5
-  target_accuracy: 0.80   # may be reached in IID
+  # Aggregation-based eval cadence
+  eval_every_aggs: 5
+  target_accuracy: 0.8     # stop when global test_acc >= this value
 
+# ---- Safety cap on merges (optional) ----
 train:
-  max_rounds: 300      # extended run for better convergence
+  max_rounds: 1000
 
-partition_alpha: 1000  # <--- KEY SETTING (IID experiment)
+# ---- Partitioning ----
+partition_alpha: 1000
 
-seed: 1
+# ---- Reproducibility ----
+seed: 42
 
+# ---- Runtime / I/O ----
 server_runtime:
-  client_delay: 0.0
+  client_delay: 0.0   # extra global delay added on every client before training
 
 io:
-  checkpoints_dir: "./checkpoints/FedAsync"
-  logs_dir: "./logs"
-  results_dir: "./results"
+  checkpoints_dir: ./checkpoints/FedAsync
+  logs_dir: ./logs
+  results_dir: ./results
 
-  global_log_csv: "./logs/FedAsync.csv"
-  client_participation_csv: "./logs/FedAsyncClientParticipation.csv"
-  final_model_path: "./results/FedAsyncModel.pt"
+  # configurable file paths
+  global_log_csv: ./logs/FedAsync.csv
+  client_participation_csv: ./logs/FedAsyncClientParticipation.csv
+  final_model_path: ./results/FedAsyncModel.pt

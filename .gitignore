@@ -11,10 +11,7 @@ __pycache__/
 # Ignore dataset folder
 data/
 checkpoints/
-# logs/ - Removed to track experiment logs
 
 # Ignore .venv folder
 .venv/
-
-# Personal file created to keep track of my tasks
-instructions.md
+.venv310/
